@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:BS;src:url(../../fonts/big-shoulders-display.woff2) format("woff2");font-weight:700 900}
+html,body{margin:0;background:transparent}
+.i{width:var(--s);height:var(--s);position:relative;background:#119a5e;overflow:hidden;display:grid;place-items:center}
+.i::before{content:"";position:absolute;inset:var(--in);border:calc(var(--s)*.028) solid rgba(255,255,255,.28);border-radius:calc(var(--s)*.03)}
+.i::after{content:"";position:absolute;left:var(--in);right:var(--in);top:50%;height:calc(var(--s)*.014);background:rgba(255,255,255,.18);transform:translateY(-50%)}
+.i span{position:relative;z-index:1;font:900 var(--fs)/1 BS,sans-serif;color:#fff;transform:translateY(5%);letter-spacing:0}
+</style></head><body><div class="i" id="ic"><span>A</span></div></body></html>

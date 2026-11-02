@@ -1,0 +1,20 @@
+{
+  "name": "Letter Call Timer",
+  "short_name": "Letter Call",
+  "description": "HIIT reaction timer that calls random letters in a British voice, with countdowns, beeps, cycles, rest and workout music.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en-GB",
+  "background_color": "#0b1416",
+  "theme_color": "#0b1416",
+  "categories": ["fitness", "sports", "health"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
