@@ -1,7 +1,7 @@
 {
   "name": "Letter Call Timer",
   "short_name": "Letter Call",
-  "description": "HIIT reaction timer that calls random letters in a British voice, with countdowns, beeps, cycles, rest and workout music.",
+  "description": "HIIT reaction timer that calls random letters in a British voice, with countdowns, beeps, cycles and rest.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
