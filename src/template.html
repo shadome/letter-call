@@ -10,8 +10,7 @@
    the transport buttons stay pinned at the bottom. Settings fold away while a session runs so the call fills the screen. */
 :root{
   --bg:#0b1416; --surface:#111d20; --surface-2:#1a2a2e; --line:#26393e; --fg:#e8f0ee; --muted:#8aa39d;
-  --go:#119a5e; --count:#f0a417; --stop:#e3463d; --rest:#2f58c6; --focus:#7fd3b4;
-  --on-phase:#ffffff; --on-count:#1c1404;
+  --accent:#119a5e; --focus:#7fd3b4;
   --font-display:"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif;
   --font-ui:"Barlow Semi Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
   --ctl:38px; --chip:30px; --gap:10px; --lbl:11px; --pad:12px;
@@ -19,13 +18,13 @@
 }
 @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
   --bg:#e7eeeb; --surface:#ffffff; --surface-2:#dbe6e2; --line:#c3d3cd; --fg:#0f1b1c; --muted:#56706a;
-  --go:#0e8a54; --count:#ec9f12; --stop:#d63a31; --rest:#2a50ba; --focus:#0e8a54; color-scheme:light; } }
+  --accent:#0e8a54; --focus:#0e8a54; color-scheme:light; } }
 :root[data-theme="light"]{
   --bg:#e7eeeb; --surface:#ffffff; --surface-2:#dbe6e2; --line:#c3d3cd; --fg:#0f1b1c; --muted:#56706a;
-  --go:#0e8a54; --count:#ec9f12; --stop:#d63a31; --rest:#2a50ba; --focus:#0e8a54; color-scheme:light; }
+  --accent:#0e8a54; --focus:#0e8a54; color-scheme:light; }
 :root[data-theme="dark"]{
   --bg:#0b1416; --surface:#111d20; --surface-2:#1a2a2e; --line:#26393e; --fg:#e8f0ee; --muted:#8aa39d;
-  --go:#119a5e; --count:#f0a417; --stop:#e3463d; --rest:#2f58c6; --focus:#7fd3b4; color-scheme:dark; }
+  --accent:#119a5e; --focus:#7fd3b4; color-scheme:dark; }
 @media (max-height:760px){ :root{ --ctl:34px; --chip:27px; --gap:8px; --pad:10px; } }
 @media (max-height:640px){ :root{ --ctl:30px; --chip:24px; --gap:6px; --lbl:10px; --pad:8px; } }
 
@@ -83,12 +82,6 @@ button{cursor:pointer}
 .bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--stage-fg) 18%,transparent);overflow:hidden;position:relative;z-index:1}
 .bar i{display:block;height:100%;width:0;background:var(--stage-fg);border-radius:3px}
 
-.app[data-phase="go"],.app[data-phase="done"]{--stage-bg:var(--go);--stage-fg:var(--on-phase)}
-.app[data-phase="count"]{--stage-bg:var(--count);--stage-fg:var(--on-count)}
-.app[data-phase="stop"]{--stage-bg:var(--stop);--stage-fg:var(--on-phase)}
-.app[data-phase="rest"],.app[data-phase="prep"]{--stage-bg:var(--rest);--stage-fg:var(--on-phase)}
-.app[data-phase="wait"]{--stage-bg:var(--surface-2)}
-
 /* ---------- Settings ---------- */
 .settings{display:grid;grid-template-rows:1fr;transition:grid-template-rows .32s ease,opacity .2s;flex:0 0 auto}
 .settings-in{min-height:0;overflow:hidden}
@@ -99,32 +92,18 @@ fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--
 .ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;
   font:700 var(--lbl)/1 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .ghead .acts{display:flex;gap:6px;align-items:center}
-.ghead .acts.switches{gap:14px}
 .mini{height:22px;padding:0 8px;white-space:nowrap;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--fg);
   font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase}
-.mini[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .letters{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:4px}
 .chip{height:var(--chip);min-width:0;padding:0;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);
   font:800 calc(var(--chip) * .6)/1 var(--font-display)}
 .chip[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
-.hint-bad{color:var(--stop)}
+.hint-bad{color:var(--fg)}
 
-.timing{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:6px 8px;align-items:center}
-.rlabel{font:600 14px/1 var(--font-ui);color:var(--fg)}
-.to{font:600 12px/1 var(--font-ui);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.timing .maxcol{transition:opacity .15s}
-.range-off .maxcol{opacity:.32}
-
-.switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--fg);text-transform:none;letter-spacing:.02em;font:600 13px/1 var(--font-ui)}
-.switch input{appearance:none;-webkit-appearance:none;flex:none;width:34px;height:20px;border-radius:10px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
-.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--fg);transition:transform .15s}
-.switch input:checked{background:var(--go)}
-.switch input:checked::after{transform:translateX(14px);background:#fff}
-
-.stepper{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;height:var(--ctl);border:1px solid var(--line);border-radius:9px;background:var(--surface-2);overflow:hidden}
+.stepper{display:grid;grid-template-columns:27px minmax(0,1fr) 27px;height:var(--ctl);border:1px solid var(--line);border-radius:9px;background:var(--surface-2);overflow:hidden}
 .stepper button{border:0;background:transparent;color:var(--fg);font:700 20px/1 var(--font-ui);padding:0;touch-action:none}
 .stepper button:active{background:var(--line)}
-.stepper input{width:100%;min-width:0;border:0;background:transparent;text-align:center;font:700 17px/1 var(--font-ui);
+.stepper input{width:100%;min-width:0;border:0;background:transparent;text-align:center;font:700 16px/1 var(--font-ui);
   font-variant-numeric:tabular-nums;padding:0;user-select:text;-webkit-user-select:text}
 .stepper input:focus{outline:none;background:var(--bg)}
 fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,fieldset:disabled .seg{opacity:.5}
@@ -136,14 +115,14 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 .seg button{border:0;background:transparent;color:var(--muted);font:700 14px/1 var(--font-ui);display:flex;align-items:center;justify-content:center;padding:0 2px;min-width:0;overflow:hidden}
 .seg button + button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg svg{width:22px;height:22px;flex:none}
 
 /* ---------- Transport ---------- */
 .transport{display:grid;grid-template-columns:1fr 2fr;gap:10px;flex:0 0 auto}
 .btn{height:calc(var(--ctl) + 16px);border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--fg);
   font:800 20px/1 var(--font-display);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px}
 .btn svg{width:20px;height:20px}
-.btn.primary{border:0;background:var(--go);color:#fff;font-size:24px}
-.btn.primary[data-mode="pause"]{background:var(--count);color:var(--on-count)}
+.btn.primary{border:0;background:var(--accent);color:#fff;font-size:24px}
 .btn:disabled{opacity:.4;cursor:default}
 
 @media (orientation:landscape) and (max-height:520px){
@@ -186,7 +165,6 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
         <div class="ghead">
           <span id="lettersHead">Letters</span>
           <span class="acts">
-            <button class="mini" id="noRepeat" type="button" aria-pressed="true" title="Never call the same letter twice in a row">No repeat</button>
             <button class="mini" id="allBtn" type="button">All</button>
             <button class="mini" id="noneBtn" type="button">None</button>
           </span>
@@ -195,36 +173,29 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
       </div>
 
       <div class="group">
-        <div class="ghead">
-          <span>Timing · s</span>
-          <span class="acts switches">
-            <label class="switch" title="Pick each Before and After time at random between two values"><input type="checkbox" id="rangeToggle"> Random range</label>
-            <label class="switch" title="Beep between letters, when the Before time starts"><input type="checkbox" id="betweenToggle" aria-label="Beep between letters"> Beep between</label>
-          </span>
-        </div>
-        <div class="timing" id="timing">
-          <span class="rlabel">Before</span>
-          <div class="stepper" data-field="before"></div>
-          <span class="to maxcol">to</span>
-          <div class="stepper maxcol" data-field="beforeMax"></div>
-          <span class="rlabel">After</span>
-          <div class="stepper" data-field="after"></div>
-          <span class="to maxcol">to</span>
-          <div class="stepper maxcol" data-field="afterMax"></div>
-        </div>
-      </div>
-
-      <div class="group">
         <div class="session">
+          <div class="cell"><span class="clabel">Before · s</span><div class="stepper" data-field="before"></div></div>
+          <div class="cell"><span class="clabel">After · s</span><div class="stepper" data-field="after"></div></div>
+          <div class="cell"><span class="clabel" title="Also play the beep this long before each letter">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
           <div class="cell"><span class="clabel">Letters / cycle</span><div class="stepper" data-field="count"></div></div>
           <div class="cell"><span class="clabel">Cycles</span><div class="stepper" data-field="cycles"></div></div>
           <div class="cell"><span class="clabel">Rest · s</span><div class="stepper" data-field="rest"></div></div>
-          <div class="cell"><span class="clabel">Get ready · s</span><div class="stepper" data-field="prep"></div></div>
-          <div class="cell"><span class="clabel" title="Also play the beep this long before each letter">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
+          <div class="cell"><span class="clabel" title="Whether the same letter can be called twice in a row">Repeats</span>
+            <div class="seg" id="repeatSeg" role="group" aria-label="Repeats">
+              <button type="button" data-on="1" aria-label="Repeats allowed" title="The same letter can come twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+              <button type="button" data-on="0" aria-label="No repeats" title="Never the same letter twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+            </div>
+          </div>
+          <div class="cell"><span class="clabel" title="Beep between letters, when the Before time starts">Beep between</span>
+            <div class="seg" id="beepSeg" role="group" aria-label="Beep between letters">
+              <button type="button" data-on="1" aria-label="Beep between letters on" title="Beep between letters: on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+              <button type="button" data-on="0" aria-label="Beep between letters off" title="Beep between letters: off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+            </div>
+          </div>
           <div class="cell"><span class="clabel">Voice</span>
             <div class="seg" id="voiceSeg" role="group" aria-label="Voice (tap to hear it)">
-              <button type="button" data-voice="bf_emma" title="Female voice: tap to hear">Female</button>
-              <button type="button" data-voice="bm_george" title="Male voice: tap to hear">Male</button>
+              <button type="button" data-voice="bf_emma" aria-label="Female voice" title="Female voice: tap to hear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="5.5"/><path d="M12 14.5V22M8.5 18.5h7"/></svg></button>
+              <button type="button" data-voice="bm_george" aria-label="Male voice" title="Male voice: tap to hear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="14" r="5.5"/><path d="M14 10l6-6M15 4h5v5"/></svg></button>
             </div>
           </div>
         </div>
@@ -247,41 +218,49 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 'use strict';
 const $ = (s) => document.querySelector(s);
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const STORE_KEY = 'letter-call-timer:v3';
-const OLD_STORE_KEY = 'letter-call-timer:v2';   // settings saved before the pre-beep became on by default
+const STORE_KEY = 'letter-call-timer:v4';
+// Settings saved by earlier versions carry over. Before/After restart from the new defaults (they moved from tenths to
+// hundredths), Random range is off for now, and v2 settings take the pre-beep default unless it had been switched on.
+const OLD_STORE_KEYS = ['letter-call-timer:v3', 'letter-call-timer:v2'];
 
 /* ===================== Config ===================== */
-// Timing fields are stored in tenths of a second (integers) to keep the arithmetic exact.
+// Times are stored as integers to keep the arithmetic exact: Before/After in hundredths of a second, moving in steps
+// of 5 (0.05 s); the pre-beep in tenths.
 const FIELDS = {
-  before:    { min: 0, max: 599, tenths: true },
-  beforeMax: { min: 1, max: 600, tenths: true },
-  after:     { min: 0, max: 599, tenths: true },
-  afterMax:  { min: 1, max: 600, tenths: true },
+  before:    { min: 0, max: 5995, step: 5, hundredths: true },
+  beforeMax: { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
+  after:     { min: 0, max: 5995, step: 5, hundredths: true },
+  afterMax:  { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
   count:     { min: 1, max: 99 },
   cycles:    { min: 0, max: 99, inf: true },   // 0 = endless
   rest:      { min: 4, max: 600 },
-  prep:      { min: 3, max: 60 },
   preBeep:   { min: 0, max: 30, tenths: true, off: true, on: 5 },   // 0 = off; first tap on + gives 0.5 s
 };
+const GET_READY = 5;   // seconds from Start to the first letter of the first cycle (includes the 3-2-1)
 // With the between-letter beep on, a pre-beep that would land this close (s) to it is skipped: they would sound like one.
 const MIN_BEEP_GAP = 0.3;
 const DEFAULTS = { letters: 'ABCD', noRepeat: false, range: false,
-  before: 11, beforeMax: 20, after: 10, afterMax: 20, count: 12, cycles: 8, rest: 15, prep: 5, preBeep: 5, betweenBeep: true,
+  before: 100, beforeMax: 200, after: 100, afterMax: 200, count: 12, cycles: 8, rest: 15, preBeep: 5, betweenBeep: true,
   voice: 'bf_emma' };
 
 function loadCfg() {
   let c = { ...DEFAULTS };
   try {
     let s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-    if (!s) {   // carry over older settings, but give them the new pre-beep default unless it had been switched on
-      s = JSON.parse(localStorage.getItem(OLD_STORE_KEY) || 'null');
-      if (s && typeof s === 'object' && !(s.preBeep > 0)) delete s.preBeep;
+    if (!s) {
+      for (const key of OLD_STORE_KEYS) {
+        s = JSON.parse(localStorage.getItem(key) || 'null');
+        if (s && typeof s === 'object') { if (key.endsWith('v2') && !(s.preBeep > 0)) delete s.preBeep; break; }
+      }
+      if (s && typeof s === 'object') ['before', 'beforeMax', 'after', 'afterMax', 'range'].forEach((k) => delete s[k]);
     }
     if (s && typeof s === 'object') c = { ...c, ...s };
   } catch (e) {}
-  for (const k in FIELDS) { const f = FIELDS[k]; c[k] = Math.min(f.max, Math.max(f.min, Math.round(+c[k] || 0))); }
-  if (c.beforeMax <= c.before) c.beforeMax = c.before + 1;
-  if (c.afterMax <= c.after) c.afterMax = c.after + 1;
+  for (const k in FIELDS) { const f = FIELDS[k], st = f.step || 1; c[k] = Math.min(f.max, Math.max(f.min, Math.round((+c[k] || 0) / st) * st)); }
+  if (c.beforeMax <= c.before) c.beforeMax = c.before + FIELDS.beforeMax.step;
+  if (c.afterMax <= c.after) c.afterMax = c.after + FIELDS.afterMax.step;
+  c.range = false;   // Random range is switched off for now; its logic is kept for later
+  delete c.prep;     // Get ready is no longer a setting
   c.letters = ALPHA.filter((l) => String(c.letters).includes(l)).join('');
   if (!['bf_emma', 'bm_george'].includes(c.voice)) c.voice = DEFAULTS.voice;
   c.betweenBeep = c.betweenBeep !== false;
@@ -294,17 +273,19 @@ function fmtField(k) {
   const f = FIELDS[k], v = cfg[k];
   if (f.inf && v === 0) return '∞';
   if (f.off && v === 0) return 'Off';
+  if (f.hundredths) return (v / 100).toFixed(2);
   return f.tenths ? (v / 10).toFixed(1) : String(v);
 }
 function setField(k, v) {
   const f = FIELDS[k];
-  v = Math.min(f.max, Math.max(f.min, Math.round(v)));
+  const st = f.step || 1;
+  v = Math.min(f.max, Math.max(f.min, Math.round(v / st) * st));
   // Random-range rule: the second value must stay strictly above the first.
-  if (k === 'beforeMax' && v <= cfg.before) v = cfg.before + 1;
-  if (k === 'afterMax' && v <= cfg.after) v = cfg.after + 1;
+  if (k === 'beforeMax' && v <= cfg.before) v = cfg.before + st;
+  if (k === 'afterMax' && v <= cfg.after) v = cfg.after + st;
   cfg[k] = v;
-  if (k === 'before' && cfg.beforeMax <= v) cfg.beforeMax = v + 1;
-  if (k === 'after' && cfg.afterMax <= v) cfg.afterMax = v + 1;
+  if (k === 'before' && cfg.beforeMax <= v) cfg.beforeMax = v + FIELDS.beforeMax.step;
+  if (k === 'after' && cfg.afterMax <= v) cfg.afterMax = v + FIELDS.afterMax.step;
   saveCfg(); syncSettings();
 }
 
@@ -407,7 +388,7 @@ function chime(t) { [1047, 1319, 1568, 2093].forEach((f, i) => tone(t + i * 0.11
 let S = freshState();
 function freshState() { return { status: 'idle', t0: 0, segs: [], sounds: [], seg: 0, snd: 0, built: 0, cursor: 0, last: null, end: Infinity, pausing: false, called: 0 }; }
 const totalCycles = () => cfg.cycles || Infinity;
-function rnd(lo, hi) { return cfg.range ? (lo + Math.floor(Math.random() * (hi - lo + 1))) / 10 : lo / 10; }
+function rnd(lo, hi) { return cfg.range ? (lo + 5 * Math.floor(Math.random() * ((hi - lo) / 5 + 1))) / 100 : lo / 100; }
 function pickLetter(prev) {
   const pool = cfg.letters.split('');
   const c = cfg.noRepeat && pool.length > 1 ? pool.filter((l) => l !== prev) : pool;
@@ -416,7 +397,7 @@ function pickLetter(prev) {
 function appendCycle() {
   const c = S.built + 1;
   if (c > totalCycles()) return;
-  const start = S.cursor, lead = c === 1 ? cfg.prep : cfg.rest, first = start + lead;
+  const start = S.cursor, lead = c === 1 ? GET_READY : cfg.rest, first = start + lead;
   S.segs.push({ k: c === 1 ? 'prep' : 'rest', a: start, b: first - 3, c });
   if (c === 1 && lead >= 4) S.sounds.push({ t: start, clip: 'ready' });
   ['three', 'two', 'one'].forEach((w, i) => {
@@ -523,11 +504,11 @@ function popGlyph() { el.glyph.classList.remove('pop'); void el.glyph.offsetWidt
 
 function estimate() {
   const n = cfg.count;
-  const a = cfg.range ? (cfg.after + cfg.afterMax) / 20 : cfg.after / 10;
-  const b = cfg.range ? (cfg.before + cfg.beforeMax) / 20 : cfg.before / 10;
+  const a = cfg.range ? (cfg.after + cfg.afterMax) / 200 : cfg.after / 100;
+  const b = cfg.range ? (cfg.before + cfg.beforeMax) / 200 : cfg.before / 100;
   const cyc = n * a + (n - 1) * b;
   if (!cfg.cycles) return { inf: true, cyc };
-  return { total: cfg.prep + cfg.cycles * cyc + (cfg.cycles - 1) * cfg.rest, cyc };
+  return { total: GET_READY + cfg.cycles * cyc + (cfg.cycles - 1) * cfg.rest, cyc };
 }
 function renderIdle() {
   if (S.status !== 'idle') return;
@@ -674,14 +655,13 @@ ALPHA.forEach((L) => {
 });
 $('#allBtn').addEventListener('click', () => { cfg.letters = ALPHA.join(''); saveCfg(); syncSettings(); });
 $('#noneBtn').addEventListener('click', () => { cfg.letters = ''; saveCfg(); syncSettings(); });
-$('#noRepeat').addEventListener('click', () => { cfg.noRepeat = !cfg.noRepeat; saveCfg(); syncSettings(); });
-const rangeToggle = $('#rangeToggle');
-rangeToggle.addEventListener('change', () => { cfg.range = rangeToggle.checked; saveCfg(); syncSettings(); });
-const betweenToggle = $('#betweenToggle');
-betweenToggle.addEventListener('change', () => { cfg.betweenBeep = betweenToggle.checked; saveCfg(); syncSettings(); });
+// On/off choices shown like the voice picker: tick for on, cross for off. "Repeats" reads the noRepeat setting inverted.
+const ONOFF = [['beepSeg', 'betweenBeep', false], ['repeatSeg', 'noRepeat', true]];
+ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
+  b.addEventListener('click', () => { const on = b.dataset.on === '1'; cfg[key] = inverted ? !on : on; saveCfg(); syncSettings(); })));
 
 const LABELS = { before: 'Seconds before a letter', beforeMax: 'Longest time before a letter', after: 'Seconds after a letter',
-  afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds', prep: 'Get ready time in seconds',
+  afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds',
   preBeep: 'Seconds before each letter to also beep, or Off' };
 // Steppers: tap for one step, hold to repeat (speeds up the longer you hold).
 document.querySelectorAll('.stepper').forEach((box) => {
@@ -693,7 +673,7 @@ document.querySelectorAll('.stepper').forEach((box) => {
   const bindHold = (btn, dir) => {
     let timer = 0, t0 = 0;
     const stepOnce = () => { const held = performance.now() - t0; const mult = held > 2600 ? 10 : held > 1200 ? 5 : 1; bump(dir * mult); };
-    const bump = (d) => { if (f.off && cfg[k] === 0 && d > 0) setField(k, f.on); else setField(k, cfg[k] + d); };
+    const bump = (d) => { if (f.off && cfg[k] === 0 && d > 0) setField(k, f.on); else setField(k, cfg[k] + d * (f.step || 1)); };
     const stop = () => { clearTimeout(timer); timer = 0; };
     btn.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return; e.preventDefault(); btn.setPointerCapture && btn.setPointerCapture(e.pointerId);
@@ -711,7 +691,7 @@ document.querySelectorAll('.stepper').forEach((box) => {
     if ((f.inf || f.off) && (raw === '' || raw === '∞' || raw === '0' || /^off$/i.test(raw))) { setField(k, 0); return; }
     const n = parseFloat(raw);
     if (isNaN(n)) { syncSettings(); return; }
-    setField(k, f.tenths ? Math.round(n * 10) : n);
+    setField(k, f.hundredths ? Math.round(n * 20) * 5 : f.tenths ? Math.round(n * 10) : n);
   };
   inp.addEventListener('change', commit);
   inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { inp.blur(); } });
@@ -735,15 +715,11 @@ function syncSettings() {
   const head = $('#lettersHead');
   head.textContent = n ? 'Letters · ' + n : 'Pick a letter';
   head.classList.toggle('hint-bad', !n);
-  $('#noRepeat').setAttribute('aria-pressed', cfg.noRepeat ? 'true' : 'false');
-  rangeToggle.checked = cfg.range;
-  betweenToggle.checked = cfg.betweenBeep;
-  $('#timing').classList.toggle('range-off', !cfg.range);
+  ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
+    b.setAttribute('aria-pressed', String((b.dataset.on === '1') === (inverted ? !cfg[key] : !!cfg[key])))));
   document.querySelectorAll('.stepper').forEach((box) => {
     const k = box.dataset.field, inp = box.children[1];
     if (document.activeElement !== inp) inp.value = fmtField(k);
-    const off = (k === 'beforeMax' || k === 'afterMax') && !cfg.range;
-    box.querySelectorAll('button,input').forEach((x) => { x.disabled = off; });
   });
   document.querySelectorAll('#voiceSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.voice === cfg.voice ? 'true' : 'false'));
   syncUI();
