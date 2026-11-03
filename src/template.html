@@ -99,6 +99,7 @@ fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--
 .ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;
   font:700 var(--lbl)/1 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .ghead .acts{display:flex;gap:6px;align-items:center}
+.ghead .acts.switches{gap:14px}
 .mini{height:22px;padding:0 8px;white-space:nowrap;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--fg);
   font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase}
 .mini[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
@@ -114,11 +115,11 @@ fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--
 .timing .maxcol{transition:opacity .15s}
 .range-off .maxcol{opacity:.32}
 
-.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--fg);text-transform:none;letter-spacing:.02em;font:600 13px/1 var(--font-ui)}
-.switch input{appearance:none;-webkit-appearance:none;width:36px;height:20px;border-radius:10px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--fg);text-transform:none;letter-spacing:.02em;font:600 13px/1 var(--font-ui)}
+.switch input{appearance:none;-webkit-appearance:none;flex:none;width:34px;height:20px;border-radius:10px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
 .switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--fg);transition:transform .15s}
 .switch input:checked{background:var(--go)}
-.switch input:checked::after{transform:translateX(16px);background:#fff}
+.switch input:checked::after{transform:translateX(14px);background:#fff}
 
 .stepper{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;height:var(--ctl);border:1px solid var(--line);border-radius:9px;background:var(--surface-2);overflow:hidden}
 .stepper button{border:0;background:transparent;color:var(--fg);font:700 20px/1 var(--font-ui);padding:0;touch-action:none}
@@ -195,8 +196,11 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 
       <div class="group">
         <div class="ghead">
-          <span>Timing · seconds</span>
-          <label class="switch"><input type="checkbox" id="rangeToggle"> Random range</label>
+          <span>Timing · s</span>
+          <span class="acts switches">
+            <label class="switch" title="Pick each Before and After time at random between two values"><input type="checkbox" id="rangeToggle"> Random range</label>
+            <label class="switch" title="Beep between letters, when the Before time starts"><input type="checkbox" id="betweenToggle" aria-label="Beep between letters"> Beep between</label>
+          </span>
         </div>
         <div class="timing" id="timing">
           <span class="rlabel">Before</span>
@@ -243,7 +247,8 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 'use strict';
 const $ = (s) => document.querySelector(s);
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const STORE_KEY = 'letter-call-timer:v2';
+const STORE_KEY = 'letter-call-timer:v3';
+const OLD_STORE_KEY = 'letter-call-timer:v2';   // settings saved before the pre-beep became on by default
 
 /* ===================== Config ===================== */
 // Timing fields are stored in tenths of a second (integers) to keep the arithmetic exact.
@@ -258,20 +263,28 @@ const FIELDS = {
   prep:      { min: 3, max: 60 },
   preBeep:   { min: 0, max: 30, tenths: true, off: true, on: 5 },   // 0 = off; first tap on + gives 0.5 s
 };
-// A pre-beep that would land this close (s) to the beep between letters is skipped: they would sound like one.
+// With the between-letter beep on, a pre-beep that would land this close (s) to it is skipped: they would sound like one.
 const MIN_BEEP_GAP = 0.3;
 const DEFAULTS = { letters: 'ABCD', noRepeat: false, range: false,
-  before: 11, beforeMax: 20, after: 10, afterMax: 20, count: 12, cycles: 8, rest: 15, prep: 5, preBeep: 0,
+  before: 11, beforeMax: 20, after: 10, afterMax: 20, count: 12, cycles: 8, rest: 15, prep: 5, preBeep: 5, betweenBeep: true,
   voice: 'bf_emma' };
 
 function loadCfg() {
   let c = { ...DEFAULTS };
-  try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (s && typeof s === 'object') c = { ...c, ...s }; } catch (e) {}
+  try {
+    let s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!s) {   // carry over older settings, but give them the new pre-beep default unless it had been switched on
+      s = JSON.parse(localStorage.getItem(OLD_STORE_KEY) || 'null');
+      if (s && typeof s === 'object' && !(s.preBeep > 0)) delete s.preBeep;
+    }
+    if (s && typeof s === 'object') c = { ...c, ...s };
+  } catch (e) {}
   for (const k in FIELDS) { const f = FIELDS[k]; c[k] = Math.min(f.max, Math.max(f.min, Math.round(+c[k] || 0))); }
   if (c.beforeMax <= c.before) c.beforeMax = c.before + 1;
   if (c.afterMax <= c.after) c.afterMax = c.after + 1;
   c.letters = ALPHA.filter((l) => String(c.letters).includes(l)).join('');
   if (!['bf_emma', 'bm_george'].includes(c.voice)) c.voice = DEFAULTS.voice;
+  c.betweenBeep = c.betweenBeep !== false;
   return c;
 }
 const cfg = loadCfg();
@@ -415,9 +428,12 @@ function appendCycle() {
   for (let i = 1; i <= cfg.count; i++) {
     if (i > 1) {
       const w = rnd(cfg.before, cfg.beforeMax), seg = { k: 'wait', a: t, b: t + w, c, i };
-      S.sounds.push({ t, beep: true });
-      const pt = t + w - cfg.preBeep / 10;   // optional pre-beep, just before the letter
-      if (cfg.preBeep > 0 && pt - t >= MIN_BEEP_GAP) { S.sounds.push({ t: pt, beep: true }); seg.pre = pt; }
+      if (cfg.betweenBeep) S.sounds.push({ t, beep: true });
+      // Optional pre-beep just before the letter. It sits inside the Before gap and never moves the letter.
+      if (cfg.preBeep > 0) {
+        const pt = Math.max(t, t + w - cfg.preBeep / 10);
+        if (!cfg.betweenBeep || pt - t >= MIN_BEEP_GAP) { S.sounds.push({ t: pt, beep: true }); seg.pre = pt; }
+      }
       S.segs.push(seg); t += w;
     }
     const L = pickLetter(S.last); S.last = L;
@@ -661,6 +677,8 @@ $('#noneBtn').addEventListener('click', () => { cfg.letters = ''; saveCfg(); syn
 $('#noRepeat').addEventListener('click', () => { cfg.noRepeat = !cfg.noRepeat; saveCfg(); syncSettings(); });
 const rangeToggle = $('#rangeToggle');
 rangeToggle.addEventListener('change', () => { cfg.range = rangeToggle.checked; saveCfg(); syncSettings(); });
+const betweenToggle = $('#betweenToggle');
+betweenToggle.addEventListener('change', () => { cfg.betweenBeep = betweenToggle.checked; saveCfg(); syncSettings(); });
 
 const LABELS = { before: 'Seconds before a letter', beforeMax: 'Longest time before a letter', after: 'Seconds after a letter',
   afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds', prep: 'Get ready time in seconds',
@@ -719,6 +737,7 @@ function syncSettings() {
   head.classList.toggle('hint-bad', !n);
   $('#noRepeat').setAttribute('aria-pressed', cfg.noRepeat ? 'true' : 'false');
   rangeToggle.checked = cfg.range;
+  betweenToggle.checked = cfg.betweenBeep;
   $('#timing').classList.toggle('range-off', !cfg.range);
   document.querySelectorAll('.stepper').forEach((box) => {
     const k = box.dataset.field, inp = box.children[1];
