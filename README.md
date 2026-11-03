@@ -14,7 +14,7 @@ A one-screen HIIT reaction timer for Android. It calls random letters (A–Z) in
 - Beep between letters (switch next to Random range, on by default): sounds when the Before gap starts.
 - Pre-beep (0.5 s by default, can be Off or 0.1–3.0 s): the beep also sounds that long before each letter, so you can get ready. It sits inside the Before gap and never changes the Before/After timing. The first letter of a cycle has the 3‑2‑1 instead. With the beep between letters on, a pre-beep within 0.3 s of it is skipped; with it off, a pre-beep longer than the gap plays at the start of the gap.
 - Letters per cycle, number of cycles (or endless), rest between cycles, get-ready time, and which letters are in the draw.
-- Two British voices (Emma, George).
+- Two British voices, female and male (tap one to hear it).
 - Defaults: letters A–D, repeats allowed, before 1.1 s, after 1.0 s, get ready 5 s, 12 letters per cycle, 8 cycles, 15 s rest, no random range, beep between letters on, pre-beep 0.5 s.
 - Start, pause, reset. Keeps the screen on while a session runs and pauses itself if the app goes to the background.
 - Settings are remembered on the phone.
