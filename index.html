@@ -88,7 +88,8 @@ button{cursor:pointer}
 .glyph[data-len="3"]{font-size:min(48cqh,38cqw)}
 .glyph[data-len="4"]{font-size:min(40cqh,29cqw)}
 .glyph[data-len="5"]{font-size:min(34cqh,23cqw)}
-.glyph[data-k="wait"]::after{content:"";display:block;width:16cqh;height:16cqh;border-radius:50%;border:2.2cqh solid currentColor;opacity:.55}
+.glyph[data-k="wait"]::after,.glyph[data-k="armed"]::after{content:"";display:block;width:16cqh;height:16cqh;border-radius:50%;border:2.2cqh solid currentColor;opacity:.55}
+.glyph[data-k="armed"]::after{background:currentColor;opacity:.95}
 .glyph.pop{animation:pop .28s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.72);opacity:.4}to{transform:none;opacity:1}}
 .phase{display:flex;align-items:baseline;justify-content:space-between;gap:12px;position:relative;z-index:1;margin-bottom:6px}
@@ -146,13 +147,11 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 
 .session{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 8px}
 .cell{display:grid;gap:4px;min-width:0}
-.cell.span2{grid-column:span 2}
 .clabel{font:700 var(--lbl)/1 var(--font-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg{display:grid;grid-template-columns:1fr 1fr;height:var(--ctl);border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface-2)}
-.seg button{border:0;background:transparent;color:var(--muted);font:700 15px/1 var(--font-ui);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 4px}
+.seg button{border:0;background:transparent;color:var(--muted);font:700 14px/1 var(--font-ui);display:flex;align-items:center;justify-content:center;padding:0 2px;min-width:0;overflow:hidden}
 .seg button + button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
-.seg svg{width:13px;height:13px;flex:none}
 
 /* ---------- Music + transport ---------- */
 .music{display:flex;align-items:center;gap:10px;flex:0 0 auto}
@@ -241,10 +240,11 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
           <div class="cell"><span class="clabel">Cycles</span><div class="stepper" data-field="cycles"></div></div>
           <div class="cell"><span class="clabel">Rest · s</span><div class="stepper" data-field="rest"></div></div>
           <div class="cell"><span class="clabel">Get ready · s</span><div class="stepper" data-field="prep"></div></div>
-          <div class="cell span2"><span class="clabel">Voice · tap to hear</span>
-            <div class="seg" id="voiceSeg" role="group" aria-label="Voice">
-              <button type="button" data-voice="bf_emma"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Emma</button>
-              <button type="button" data-voice="bm_george"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>George</button>
+          <div class="cell"><span class="clabel" title="Also play the beep this long before each letter">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
+          <div class="cell"><span class="clabel">Voice</span>
+            <div class="seg" id="voiceSeg" role="group" aria-label="Voice (tap to hear it)">
+              <button type="button" data-voice="bf_emma" title="Emma: tap to hear">Emma</button>
+              <button type="button" data-voice="bm_george" title="George: tap to hear">George</button>
             </div>
           </div>
         </div>
@@ -294,9 +294,12 @@ const FIELDS = {
   cycles:    { min: 0, max: 99, inf: true },   // 0 = endless
   rest:      { min: 4, max: 600 },
   prep:      { min: 3, max: 60 },
+  preBeep:   { min: 0, max: 30, tenths: true, off: true, on: 5 },   // 0 = off; first tap on + gives 0.5 s
 };
+// A pre-beep that would land this close (s) to the beep between letters is skipped: they would sound like one.
+const MIN_BEEP_GAP = 0.3;
 const DEFAULTS = { letters: ALPHA.join(''), noRepeat: true, range: false,
-  before: 10, beforeMax: 20, after: 20, afterMax: 35, count: 8, cycles: 5, rest: 30, prep: 5,
+  before: 10, beforeMax: 20, after: 20, afterMax: 35, count: 8, cycles: 5, rest: 30, prep: 5, preBeep: 0,
   voice: 'bf_emma', music: 'pulse', vol: 65 };
 
 function loadCfg() {
@@ -315,6 +318,7 @@ function saveCfg() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cfg));
 function fmtField(k) {
   const f = FIELDS[k], v = cfg[k];
   if (f.inf && v === 0) return '∞';
+  if (f.off && v === 0) return 'Off';
   return f.tenths ? (v / 10).toFixed(1) : String(v);
 }
 function setField(k, v) {
@@ -665,7 +669,13 @@ function appendCycle() {
   });
   let t = first;
   for (let i = 1; i <= cfg.count; i++) {
-    if (i > 1) { const w = rnd(cfg.before, cfg.beforeMax); S.sounds.push({ t, beep: true }); S.segs.push({ k: 'wait', a: t, b: t + w, c, i }); t += w; }
+    if (i > 1) {
+      const w = rnd(cfg.before, cfg.beforeMax), seg = { k: 'wait', a: t, b: t + w, c, i };
+      S.sounds.push({ t, beep: true });
+      const pt = t + w - cfg.preBeep / 10;   // optional pre-beep, just before the letter
+      if (cfg.preBeep > 0 && pt - t >= MIN_BEEP_GAP) { S.sounds.push({ t: pt, beep: true }); seg.pre = pt; }
+      S.segs.push(seg); t += w;
+    }
     const L = pickLetter(S.last); S.last = L;
     const d = rnd(cfg.after, cfg.afterMax);
     S.sounds.push({ t, clip: L, letter: true }); S.segs.push({ k: 'go', L, a: t, b: t + d, c, i }); t += d;
@@ -801,7 +811,11 @@ function frame() {
     case 'prep': glyph = String(Math.ceil(g.b + 3 - now - 1e-6)); name = 'Get ready'; metaR = cfg.count + ' letters'; remain = g.b + 3 - now; span = g.b + 3 - g.a; break;
     case 'count': glyph = String(g.n); name = g.n === 1 ? 'Here we go' : 'Get set'; metaR = cfg.count + ' letters'; break;
     case 'go': glyph = g.L; name = 'Go'; kind = 'go'; metaR = 'Letter ' + g.i + '/' + cfg.count; break;
-    case 'wait': glyph = ''; kind = 'wait'; name = 'Next call'; metaR = 'Letter ' + (g.i) + '/' + cfg.count; break;
+    case 'wait': {
+      const armed = g.pre != null && now >= g.pre;
+      glyph = ''; kind = armed ? 'armed' : 'wait'; name = armed ? 'Ready' : 'Next call'; metaR = 'Letter ' + (g.i) + '/' + cfg.count;
+      break;
+    }
     case 'rest':
       if (now - g.a < 1.1) { phase = 'stop'; glyph = 'STOP'; name = 'Stop'; }
       else { glyph = String(Math.ceil(g.b + 3 - now - 1e-6)); name = 'Rest'; }
@@ -812,7 +826,9 @@ function frame() {
   if (g.k === 'rest') put('ml', el.metaL, 'text', 'Cycle ' + (g.c - 1) + (tc === Infinity ? '' : '/' + tc) + ' done');
   else put('ml', el.metaL, 'text', cyc);
   setPhase(phase);
+  const prevKind = last.gk;
   setGlyph(glyph, kind);
+  if (kind === 'armed' && prevKind !== 'armed') popGlyph();
   if (g !== lastSegRef) { lastSegRef = g; if (g.k === 'go' || g.k === 'count') popGlyph(); }
   put('pn', el.phaseName, 'text', S.status === 'paused' ? 'Paused' : name);
   put('pt', el.phaseTime, 'text', remain > 0 ? remain.toFixed(1) + ' s' : '');
@@ -907,7 +923,8 @@ const rangeToggle = $('#rangeToggle');
 rangeToggle.addEventListener('change', () => { cfg.range = rangeToggle.checked; saveCfg(); syncSettings(); });
 
 const LABELS = { before: 'Seconds before a letter', beforeMax: 'Longest time before a letter', after: 'Seconds after a letter',
-  afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds', prep: 'Get ready time in seconds' };
+  afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds', prep: 'Get ready time in seconds',
+  preBeep: 'Seconds before each letter to also beep, or Off' };
 // Steppers: tap for one step, hold to repeat (speeds up the longer you hold).
 document.querySelectorAll('.stepper').forEach((box) => {
   const k = box.dataset.field, f = FIELDS[k];
@@ -917,7 +934,8 @@ document.querySelectorAll('.stepper').forEach((box) => {
   dec.setAttribute('aria-label', 'Decrease ' + LABELS[k]); inc.setAttribute('aria-label', 'Increase ' + LABELS[k]);
   const bindHold = (btn, dir) => {
     let timer = 0, t0 = 0;
-    const stepOnce = () => { const held = performance.now() - t0; const mult = held > 2600 ? 10 : held > 1200 ? 5 : 1; setField(k, cfg[k] + dir * mult); };
+    const stepOnce = () => { const held = performance.now() - t0; const mult = held > 2600 ? 10 : held > 1200 ? 5 : 1; bump(dir * mult); };
+    const bump = (d) => { if (f.off && cfg[k] === 0 && d > 0) setField(k, f.on); else setField(k, cfg[k] + d); };
     const stop = () => { clearTimeout(timer); timer = 0; };
     btn.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return; e.preventDefault(); btn.setPointerCapture && btn.setPointerCapture(e.pointerId);
@@ -926,13 +944,13 @@ document.querySelectorAll('.stepper').forEach((box) => {
       timer = setTimeout(rep, 420);
     });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => btn.addEventListener(ev, stop));
-    btn.addEventListener('click', (e) => { if (e.detail === 0) setField(k, cfg[k] + dir); }); // keyboard
+    btn.addEventListener('click', (e) => { if (e.detail === 0) bump(dir); }); // keyboard
     btn.addEventListener('contextmenu', (e) => e.preventDefault());
   };
   bindHold(dec, -1); bindHold(inc, +1);
   const commit = () => {
     const raw = inp.value.trim().replace(',', '.');
-    if (f.inf && (raw === '' || raw === '∞' || raw === '0')) { setField(k, 0); return; }
+    if ((f.inf || f.off) && (raw === '' || raw === '∞' || raw === '0' || /^off$/i.test(raw))) { setField(k, 0); return; }
     const n = parseFloat(raw);
     if (isNaN(n)) { syncSettings(); return; }
     setField(k, f.tenths ? Math.round(n * 10) : n);

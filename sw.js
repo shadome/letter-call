@@ -1,5 +1,5 @@
 // Letter Call Timer service worker: keeps the whole app on the phone so it opens and runs offline.
-const CACHE = 'letter-call-4bff9427c3';
+const CACHE = 'letter-call-ae5c2e332e';
 const ASSETS = [
   "./",
   "./index.html",
