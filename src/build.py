@@ -17,7 +17,7 @@ head, body = src[:i], src[i:]
 gf_start = head.index('<link rel="preconnect"'); gf_end = head.index('<style>')
 head = head[:gf_start] + head[gf_end:]
 head = head.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '')
-head = head.replace('<meta name="theme-color" content="#0b1416">\n', '')
+head = head.replace('<meta name="theme-color" content="#161826">\n', '')
 fonts = """<style>
 @font-face{font-family:"Barlow Semi Condensed";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-semi-condensed-500.woff2) format("woff2")}
 @font-face{font-family:"Barlow Semi Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-semi-condensed-600.woff2) format("woff2")}
@@ -32,8 +32,7 @@ pre = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="HIIT reaction timer that calls random letters in a British voice.">
-<meta name="theme-color" content="#0b1416" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#e7eeeb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161826">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
