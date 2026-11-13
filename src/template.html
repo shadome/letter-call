@@ -36,7 +36,7 @@ button{cursor:pointer}
   --stage-bg:var(--surface);--stage-fg:var(--fg)}
 
 /* ---------- Stage (the court) ---------- */
-.stage{flex:1 1 auto;min-height:140px;position:relative;container-type:size;border-radius:2px;
+.stage{flex:1 1 auto;min-height:110px;position:relative;container-type:size;border-radius:2px;
   background:var(--stage-bg);color:var(--stage-fg);transition:background-color .12s linear,color .12s linear;
   display:grid;grid-template-rows:auto 1fr auto auto;padding:12px 16px 14px;overflow:hidden}
 .stage::before{content:"";position:absolute;inset:8px;pointer-events:none;border:2px solid currentColor;opacity:.09;border-radius:2px}
@@ -88,6 +88,7 @@ fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--
 .mini{height:22px;padding:0 8px;white-space:nowrap;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--fg);
   font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase}
 .letters{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:4px}
+.digits{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
 .chip{height:var(--chip);min-width:0;padding:0;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--muted);
   font:800 calc(var(--chip) * .6)/1 var(--font-display)}
 .chip[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
@@ -133,7 +134,7 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 <div class="app" id="app" data-phase="idle">
   <section class="stage" id="stage" aria-label="Live display">
     <div class="meta">
-      <span id="metaL" class="num">Letter Call</span>
+      <span id="metaL" class="num">Call timer</span>
       <span class="grow"></span>
       <span id="metaR" class="num"></span>
       <span class="wake" id="wake" title="Keeps the screen awake while a session runs">
@@ -156,33 +157,34 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
       <legend hidden>Session settings</legend>
       <div class="group">
         <div class="ghead">
-          <span id="lettersHead">Letters</span>
+          <span id="lettersHead">Calls</span>
           <span class="acts">
             <button class="mini" id="allBtn" type="button">All</button>
             <button class="mini" id="noneBtn" type="button">None</button>
           </span>
         </div>
         <div class="letters" id="letters" role="group" aria-label="Letters in the draw"></div>
+        <div class="digits" id="digits" role="group" aria-label="Digits in the draw"></div>
       </div>
 
       <div class="group">
         <div class="session">
           <div class="cell"><span class="clabel">Before · s</span><div class="stepper" data-field="before"></div></div>
           <div class="cell"><span class="clabel">After · s</span><div class="stepper" data-field="after"></div></div>
-          <div class="cell"><span class="clabel" title="Also play the beep this long before each letter">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
-          <div class="cell"><span class="clabel">Letters / cycle</span><div class="stepper" data-field="count"></div></div>
+          <div class="cell"><span class="clabel" title="Also play the beep this long before each call">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
+          <div class="cell"><span class="clabel">Calls / cycle</span><div class="stepper" data-field="count"></div></div>
           <div class="cell"><span class="clabel">Cycles</span><div class="stepper" data-field="cycles"></div></div>
           <div class="cell"><span class="clabel">Rest · s</span><div class="stepper" data-field="rest"></div></div>
-          <div class="cell"><span class="clabel" title="Whether the same letter can be called twice in a row">Repeats</span>
+          <div class="cell"><span class="clabel" title="Whether the same call can be called twice in a row">Repeats</span>
             <div class="seg" id="repeatSeg" role="group" aria-label="Repeats">
-              <button type="button" data-on="1" aria-label="Repeats allowed" title="The same letter can come twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
-              <button type="button" data-on="0" aria-label="No repeats" title="Never the same letter twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+              <button type="button" data-on="1" aria-label="Repeats allowed" title="The same call can come twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+              <button type="button" data-on="0" aria-label="No repeats" title="Never the same call twice in a row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
             </div>
           </div>
-          <div class="cell"><span class="clabel" title="Beep between letters, when the Before time starts">Beep between</span>
-            <div class="seg" id="beepSeg" role="group" aria-label="Beep between letters">
-              <button type="button" data-on="1" aria-label="Beep between letters on" title="Beep between letters: on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
-              <button type="button" data-on="0" aria-label="Beep between letters off" title="Beep between letters: off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+          <div class="cell"><span class="clabel" title="Beep between calls, when the Before time starts">Beep between</span>
+            <div class="seg" id="beepSeg" role="group" aria-label="Beep between calls">
+              <button type="button" data-on="1" aria-label="Beep between calls on" title="Beep between calls: on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+              <button type="button" data-on="0" aria-label="Beep between calls off" title="Beep between calls: off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
             </div>
           </div>
           <div class="cell"><span class="clabel">Voice</span>
@@ -211,6 +213,8 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 'use strict';
 const $ = (s) => document.querySelector(s);
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const DIGITS = '0123456789'.split('');
+const SYMBOLS = ALPHA.concat(DIGITS);   // everything that can be called; cfg.letters holds the ones in the draw
 const STORE_KEY = 'letter-call-timer:v4';
 // Settings saved by earlier versions carry over. Before/After restart from the new defaults (they moved from tenths to
 // hundredths), Random range is off for now, and v2 settings take the pre-beep default unless it had been switched on.
@@ -254,7 +258,7 @@ function loadCfg() {
   if (c.afterMax <= c.after) c.afterMax = c.after + FIELDS.afterMax.step;
   c.range = false;   // Random range is switched off for now; its logic is kept for later
   delete c.prep;     // Get ready is no longer a setting
-  c.letters = ALPHA.filter((l) => String(c.letters).includes(l)).join('');
+  c.letters = SYMBOLS.filter((l) => String(c.letters).includes(l)).join('');
   if (!['bf_emma', 'bm_george'].includes(c.voice)) c.voice = DEFAULTS.voice;
   c.betweenBeep = c.betweenBeep !== false;
   return c;
@@ -514,8 +518,8 @@ function renderIdle() {
     put('pn', el.phaseName, 'text', e.inf ? 'Endless cycles' : (cfg.range ? 'Session ≈' : 'Session'));
     put('pt', el.phaseTime, 'text', fmtClock(e.cyc) + ' / cycle');
   }
-  put('ml', el.metaL, 'text', 'Letter Call');
-  put('mr', el.metaR, 'text', (cfg.cycles ? cfg.cycles : '∞') + ' × ' + cfg.count + ' letters');
+  put('ml', el.metaL, 'text', 'Call timer');
+  put('mr', el.metaR, 'text', (cfg.cycles ? cfg.cycles : '∞') + ' × ' + cfg.count + ' calls');
   put('bw', el.bar, 'width', '0%');
 }
 
@@ -538,12 +542,12 @@ function frame() {
   let phase = g.k, glyph = '', name = '', kind = '', remain = Math.max(0, g.b - now), span = Math.max(0.001, g.b - g.a);
   let metaR = '';
   switch (g.k) {
-    case 'prep': glyph = String(Math.ceil(g.b + 3 - now - 1e-6)); name = 'Get ready'; metaR = cfg.count + ' letters'; remain = g.b + 3 - now; span = g.b + 3 - g.a; break;
-    case 'count': glyph = String(g.n); name = g.n === 1 ? 'Here we go' : 'Get set'; metaR = cfg.count + ' letters'; break;
-    case 'go': glyph = g.L; name = 'Go'; kind = 'go'; metaR = 'Letter ' + g.i + '/' + cfg.count; break;
+    case 'prep': glyph = String(Math.ceil(g.b + 3 - now - 1e-6)); name = 'Get ready'; metaR = cfg.count + ' calls'; remain = g.b + 3 - now; span = g.b + 3 - g.a; break;
+    case 'count': glyph = String(g.n); name = g.n === 1 ? 'Here we go' : 'Get set'; metaR = cfg.count + ' calls'; break;
+    case 'go': glyph = g.L; name = 'Go'; kind = 'go'; metaR = 'Call ' + g.i + '/' + cfg.count; break;
     case 'wait': {
       const armed = g.pre != null && now >= g.pre;
-      glyph = ''; kind = armed ? 'armed' : 'wait'; name = armed ? 'Ready' : 'Next call'; metaR = 'Letter ' + (g.i) + '/' + cfg.count;
+      glyph = ''; kind = armed ? 'armed' : 'wait'; name = armed ? 'Ready' : 'Next call'; metaR = 'Call ' + (g.i) + '/' + cfg.count;
       break;
     }
     case 'rest':
@@ -636,26 +640,26 @@ el.main.addEventListener('click', () => {
 });
 el.reset.addEventListener('click', reset);
 
-// Letters
-const lettersEl = $('#letters');
-ALPHA.forEach((L) => {
+// Calls: a chip per letter and per digit
+const lettersEl = $('#letters'), digitsEl = $('#digits');
+SYMBOLS.forEach((L) => {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = L; b.dataset.l = L;
   b.addEventListener('click', () => {
     const set = new Set(cfg.letters.split('')); set.has(L) ? set.delete(L) : set.add(L);
-    cfg.letters = ALPHA.filter((x) => set.has(x)).join(''); saveCfg(); syncSettings();
+    cfg.letters = SYMBOLS.filter((x) => set.has(x)).join(''); saveCfg(); syncSettings();
   });
-  lettersEl.appendChild(b);
+  (DIGITS.includes(L) ? digitsEl : lettersEl).appendChild(b);
 });
-$('#allBtn').addEventListener('click', () => { cfg.letters = ALPHA.join(''); saveCfg(); syncSettings(); });
+$('#allBtn').addEventListener('click', () => { cfg.letters = SYMBOLS.join(''); saveCfg(); syncSettings(); });
 $('#noneBtn').addEventListener('click', () => { cfg.letters = ''; saveCfg(); syncSettings(); });
 // On/off choices shown like the voice picker: tick for on, cross for off. "Repeats" reads the noRepeat setting inverted.
 const ONOFF = [['beepSeg', 'betweenBeep', false], ['repeatSeg', 'noRepeat', true]];
 ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
   b.addEventListener('click', () => { const on = b.dataset.on === '1'; cfg[key] = inverted ? !on : on; saveCfg(); syncSettings(); })));
 
-const LABELS = { before: 'Seconds before a letter', beforeMax: 'Longest time before a letter', after: 'Seconds after a letter',
-  afterMax: 'Longest time after a letter', count: 'Letters per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds',
-  preBeep: 'Seconds before each letter to also beep, or Off' };
+const LABELS = { before: 'Seconds before a call', beforeMax: 'Longest time before a call', after: 'Seconds after a call',
+  afterMax: 'Longest time after a call', count: 'Calls per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds',
+  preBeep: 'Seconds before each call to also beep, or Off' };
 // Steppers: tap for one step, hold to repeat (speeds up the longer you hold).
 document.querySelectorAll('.stepper').forEach((box) => {
   const k = box.dataset.field, f = FIELDS[k];
@@ -703,10 +707,10 @@ document.querySelectorAll('#voiceSeg button').forEach((b) => {
 });
 
 function syncSettings() {
-  lettersEl.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', cfg.letters.includes(c.dataset.l) ? 'true' : 'false'));
+  document.querySelectorAll('#letters .chip, #digits .chip').forEach((c) => c.setAttribute('aria-pressed', cfg.letters.includes(c.dataset.l) ? 'true' : 'false'));
   const n = cfg.letters.length;
   const head = $('#lettersHead');
-  head.textContent = n ? 'Letters · ' + n : 'Pick a letter';
+  head.textContent = n ? 'Calls · ' + n : 'Pick a letter or digit';
   head.classList.toggle('hint-bad', !n);
   ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
     b.setAttribute('aria-pressed', String((b.dataset.on === '1') === (inverted ? !cfg[key] : !!cfg[key])))));

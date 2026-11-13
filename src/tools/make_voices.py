@@ -9,6 +9,7 @@ from kokoro_onnx import Kokoro
 HERE = os.path.dirname(os.path.abspath(__file__))
 VOICES = ["bf_emma", "bm_george"]
 PHRASES = {c: c + "!" for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"}
+PHRASES.update({str(d): w + "!" for d, w in enumerate(["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"])})
 PHRASES.update({"three": "Three!", "two": "Two!", "one": "One!", "stop": "Stop!", "rest": "Rest.", "ready": "Get ready!", "done": "Well done!"})
 
 k = Kokoro(os.path.join(HERE, "kokoro-v1.0.int8.onnx"), os.path.join(HERE, "voices-v1.0.bin"))
