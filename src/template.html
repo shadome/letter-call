@@ -235,7 +235,7 @@ const FIELDS = {
 };
 const GET_READY = 5;   // seconds from Start to the first letter of the first cycle (includes the 3-2-1)
 // With the between-letter beep on, a pre-beep that would land this close (s) to it is skipped: they would sound like one.
-const MIN_BEEP_GAP = 0.3;
+const MIN_BEEP_GAP_H = 30;   // in hundredths of a second (0.30 s); integers keep the comparison exact
 const DEFAULTS = { letters: 'ABCD', noRepeat: false, range: false,
   before: 100, beforeMax: 200, after: 100, afterMax: 200, count: 12, cycles: 8, rest: 15, preBeep: 5, betweenBeep: true,
   voice: 'bf_emma' };
@@ -369,6 +369,10 @@ function beep(t) { // the tone between two letters
   const d = sessSfx || sfxBus;
   tone(t, 1175, 0.17, 0.9, 'triangle', d); tone(t, 2350, 0.1, 0.22, 'sine', d);
 }
+function readyTick(t) { // the pre-beep: a fifth higher and half as long as the beep, so the two are told apart by ear
+  const d = sessSfx || sfxBus;
+  tone(t, 1760, 0.08, 0.85, 'triangle', d); tone(t, 3520, 0.05, 0.2, 'sine', d);
+}
 function blip(t) { tone(t, 740, 0.09, 0.45, 'triangle', sessSfx || sfxBus); }
 function buzzer(t) {
   const d = sessSfx || sfxBus, lp = ctx.createBiquadFilter(), g = ctx.createGain();
@@ -385,7 +389,8 @@ function chime(t) { [1047, 1319, 1568, 2093].forEach((f, i) => tone(t + i * 0.11
 let S = freshState();
 function freshState() { return { status: 'idle', t0: 0, segs: [], sounds: [], seg: 0, snd: 0, built: 0, cursor: 0, last: null, end: Infinity, pausing: false, called: 0 }; }
 const totalCycles = () => cfg.cycles || Infinity;
-function rnd(lo, hi) { return cfg.range ? (lo + 5 * Math.floor(Math.random() * ((hi - lo) / 5 + 1))) / 100 : lo / 100; }
+function rndH(lo, hi) { return cfg.range ? lo + 5 * Math.floor(Math.random() * ((hi - lo) / 5 + 1)) : lo; }   // hundredths
+function rnd(lo, hi) { return rndH(lo, hi) / 100; }
 function pickLetter(prev) {
   const pool = cfg.letters.split('');
   const c = cfg.noRepeat && pool.length > 1 ? pool.filter((l) => l !== prev) : pool;
@@ -405,12 +410,12 @@ function appendCycle() {
   let t = first;
   for (let i = 1; i <= cfg.count; i++) {
     if (i > 1) {
-      const w = rnd(cfg.before, cfg.beforeMax), seg = { k: 'wait', a: t, b: t + w, c, i };
+      const wH = rndH(cfg.before, cfg.beforeMax), w = wH / 100, seg = { k: 'wait', a: t, b: t + w, c, i };
       if (cfg.betweenBeep) S.sounds.push({ t, beep: true });
-      // Optional pre-beep just before the letter. It sits inside the Before gap and never moves the letter.
+      // Optional pre-beep just before the call. It sits inside the Before gap and never moves the call.
       if (cfg.preBeep > 0) {
-        const pt = Math.max(t, t + w - cfg.preBeep / 10);
-        if (!cfg.betweenBeep || pt - t >= MIN_BEEP_GAP) { S.sounds.push({ t: pt, beep: true }); seg.pre = pt; }
+        const leadH = Math.max(0, wH - cfg.preBeep * 10);   // gap start to pre-beep, in hundredths
+        if (!cfg.betweenBeep || leadH >= MIN_BEEP_GAP_H) { const pt = t + leadH / 100; S.sounds.push({ t: pt, preBeep: true }); seg.pre = pt; }
       }
       S.segs.push(seg); t += w;
     }
@@ -428,6 +433,7 @@ function appendCycle() {
 }
 function fireSound(e, at) {
   if (e.beep) beep(at);
+  if (e.preBeep) readyTick(at);
   if (e.blip) blip(at);
   if (e.buzz) buzzer(at);
   if (e.chime) chime(at + 0.05);
@@ -435,11 +441,15 @@ function fireSound(e, at) {
   if (e.letter) S.called++;
 }
 
+let starting = false;   // Start waits for the audio engine; a second tap meanwhile must not launch a second session
 async function start() {
-  if (!cfg.letters) return;
+  if (!cfg.letters || starting) return;
   if (!ensureAudio()) return;
-  try { await ctx.resume(); } catch (e) {}
-  await Promise.race([voicesReady, new Promise((r) => setTimeout(r, 1500))]);
+  starting = true;
+  try {
+    try { await ctx.resume(); } catch (e) {}
+    await Promise.race([voicesReady, new Promise((r) => setTimeout(r, 1500))]);
+  } finally { starting = false; }
   newSessionBuses();
   S = freshState(); S.status = 'running';
   S.t0 = ctx.currentTime + 0.12;
