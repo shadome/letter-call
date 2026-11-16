@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap">
 <style>
 /* Layout: one fixed-height column. The live "court" display on top flexes to fill; settings sit in one panel below;
-   the transport buttons stay pinned at the bottom. Settings fold away while a session runs so the call fills the screen. */
+   the transport buttons stay pinned at the bottom. Settings fold away while a session runs so the call fills the screen.
+   Calls' own Before/After times are edited in a modal opened from the Calls header. */
 :root{
   /* Iris Console palette: ground-1, ground-2, ground-4, edge-2, ink-1, ink-4, accent-700, accent-600.
      Iris is dark only, so there is no light theme. */
@@ -45,7 +46,7 @@ button{cursor:pointer}
 .meta .grow{flex:1}
 .meta > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .meta .num{font-variant-numeric:tabular-nums}
-.icon-btn{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:2px;background:transparent;color:inherit;opacity:.75}
+.icon-btn{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:2px;background:transparent;color:inherit;opacity:.75;padding:0}
 .icon-btn:hover{opacity:1}
 .icon-btn svg{width:18px;height:18px}
 .pill{height:26px;padding:0 10px 0 8px;border-radius:2px;border:1.5px solid currentColor;background:transparent;color:inherit;
@@ -63,6 +64,7 @@ button{cursor:pointer}
 .glyph[data-len="3"]{font-size:min(48cqh,38cqw)}
 .glyph[data-len="4"]{font-size:min(40cqh,29cqw)}
 .glyph[data-len="5"]{font-size:min(34cqh,23cqw)}
+.glyph[data-len="6"]{font-size:min(30cqh,19cqw)}
 .glyph[data-k="wait"]::after,.glyph[data-k="armed"]::after{content:"";display:block;width:16cqh;height:16cqh;border-radius:2px;border:2.2cqh solid currentColor;opacity:.55}
 .glyph[data-k="armed"]::after{background:currentColor;opacity:.95}
 .glyph.pop{animation:pop .28s cubic-bezier(.2,1.4,.4,1)}
@@ -82,16 +84,24 @@ button{cursor:pointer}
 fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--surface);border-radius:2px;display:grid;gap:var(--gap)}
 .group{display:grid;gap:6px}
 .group + .group{border-top:1px solid var(--line);padding-top:var(--gap)}
-.ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;
   font:700 var(--lbl)/1 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .ghead .acts{display:flex;gap:6px;align-items:center}
-.mini{height:22px;padding:0 8px;white-space:nowrap;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--fg);
-  font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase}
-.letters{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:4px}
-.digits{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
-.chip{height:var(--chip);min-width:0;padding:0;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--muted);
+.mini{height:24px;padding:0 8px;white-space:nowrap;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--fg);
+  font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px}
+.mini svg{width:13px;height:13px}
+.mini:disabled{opacity:.35}
+.items{display:grid;gap:4px}
+.chip{position:relative;height:var(--chip);min-width:0;padding:0;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--muted);
   font:800 calc(var(--chip) * .6)/1 var(--font-display)}
 .chip[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+/* Colour items: the swatch is the item; unpicked swatches are faded, picked ones carry a ring. */
+.chip.colour{background:var(--c);color:var(--ci);border-color:transparent;opacity:.3;
+  font:700 11px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis}
+.chip.colour[aria-pressed="true"]{opacity:1;box-shadow:0 0 0 2px var(--fg)}
+/* A dot marks a call with its own Before/After. */
+.chip.own::after{content:"";position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;
+  background:var(--focus);box-shadow:0 0 0 1.5px var(--bg)}
 .hint-bad{color:var(--fg)}
 
 .stepper{display:grid;grid-template-columns:27px minmax(0,1fr) 27px;height:var(--ctl);border:1px solid var(--line);border-radius:2px;background:var(--surface-2);overflow:hidden}
@@ -100,6 +110,7 @@ fieldset{border:0;margin:0;padding:var(--pad) 12px;min-width:0;background:var(--
 .stepper input{width:100%;min-width:0;border:0;background:transparent;text-align:center;font:700 16px/1 var(--font-ui);
   font-variant-numeric:tabular-nums;padding:0;user-select:text;-webkit-user-select:text}
 .stepper input:focus{outline:none;background:var(--bg)}
+.stepper.inherit input{color:var(--muted)}
 fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,fieldset:disabled .seg{opacity:.5}
 
 .session{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 8px}
@@ -110,6 +121,8 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 .seg button + button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .seg svg{width:22px;height:22px;flex:none}
+.seg.modes{grid-template-columns:repeat(3,1fr)}
+.seg.modes button{font:700 16px/1 var(--font-ui);letter-spacing:.03em}
 
 /* ---------- Transport ---------- */
 .transport{display:grid;grid-template-columns:1fr 2fr;gap:10px;flex:0 0 auto}
@@ -118,6 +131,29 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 .btn svg{width:20px;height:20px}
 .btn.primary{border:0;background:var(--accent);color:var(--fg);font-size:24px}
 .btn:disabled{opacity:.4;cursor:default}
+
+/* ---------- Own times (modal) ---------- */
+.dlg{width:min(520px,calc(100% - 24px));max-height:calc(100% - 24px);padding:0;border:1px solid var(--line);border-radius:2px;
+  background:var(--surface);color:var(--fg);overflow:hidden}
+.dlg[open]{display:flex;flex-direction:column}
+.dlg::backdrop{background:rgba(8,9,14,.72)}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 10px 6px 16px}
+.dlg-head h2{margin:0;font:800 22px/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase}
+.dlg-note{margin:0;padding:0 16px 10px;font:600 13px/1.3 var(--font-ui);color:var(--muted)}
+.trow{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;align-items:center}
+.thead{padding:0 16px 6px;font:700 var(--lbl)/1 var(--font-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tlist{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:6px;align-content:start;padding:2px 16px 12px}
+.tempty{margin:0;padding:8px 0 4px;font:600 14px/1.3 var(--font-ui);color:var(--muted)}
+.ibadge{height:var(--ctl);display:grid;place-items:center;border-radius:2px;background:var(--fg);color:var(--bg);position:relative;
+  font:800 calc(var(--ctl) * .62)/1 var(--font-display)}
+.ibadge.colour{background:var(--c);color:var(--ci);font:700 9px/1 var(--font-ui);letter-spacing:.04em;text-transform:uppercase;
+  box-shadow:inset 0 0 0 1px rgba(233,233,237,.25)}
+.ireset{height:var(--ctl);border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--fg);display:grid;place-items:center;padding:0}
+.ireset svg{width:18px;height:18px}
+.ireset:disabled{opacity:.3;cursor:default}
+.dlg-foot{display:grid;grid-template-columns:1fr 2fr;gap:10px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+.dlg-foot .btn{font-size:18px}
+.dlg-foot .btn.primary{font-size:20px}
 
 @media (orientation:landscape) and (max-height:520px){
   .app{max-width:none;display:grid;grid-template-columns:1.1fr 1fr;grid-template-rows:minmax(0,1fr) auto;
@@ -156,21 +192,27 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
     <fieldset id="cfgSet">
       <legend hidden>Session settings</legend>
       <div class="group">
+        <div class="seg modes" id="modeSeg" role="group" aria-label="What to call">
+          <button type="button" data-mode="letters">Letters</button>
+          <button type="button" data-mode="digits">Digits</button>
+          <button type="button" data-mode="colours">Colours</button>
+        </div>
         <div class="ghead">
-          <span id="lettersHead">Calls</span>
+          <span id="callsHead">Calls</span>
           <span class="acts">
+            <button class="mini" id="timesBtn" type="button" title="Give the picked calls their own Before and After">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span id="timesBtnTxt">Own times</span></button>
             <button class="mini" id="allBtn" type="button">All</button>
             <button class="mini" id="noneBtn" type="button">None</button>
           </span>
         </div>
-        <div class="letters" id="letters" role="group" aria-label="Letters in the draw"></div>
-        <div class="digits" id="digits" role="group" aria-label="Digits in the draw"></div>
+        <div class="items" id="items" role="group" aria-label="Calls in the draw"></div>
       </div>
 
       <div class="group">
         <div class="session">
-          <div class="cell"><span class="clabel">Before · s</span><div class="stepper" data-field="before"></div></div>
-          <div class="cell"><span class="clabel">After · s</span><div class="stepper" data-field="after"></div></div>
+          <div class="cell"><span class="clabel" title="Default time before a call; a call's own time replaces it">Before · s</span><div class="stepper" data-field="before"></div></div>
+          <div class="cell"><span class="clabel" title="Default time after a call; a call's own time replaces it">After · s</span><div class="stepper" data-field="after"></div></div>
           <div class="cell"><span class="clabel" title="Also play the beep this long before each call">Pre-beep · s</span><div class="stepper" data-field="preBeep"></div></div>
           <div class="cell"><span class="clabel">Calls / cycle</span><div class="stepper" data-field="count"></div></div>
           <div class="cell"><span class="clabel">Cycles</span><div class="stepper" data-field="cycles"></div></div>
@@ -205,6 +247,22 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
   </div>
 </div>
 
+<dialog class="dlg" id="timesDlg" aria-labelledby="timesTitle">
+  <div class="dlg-head">
+    <h2 id="timesTitle">Own times</h2>
+    <button class="icon-btn" id="timesClose" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <p class="dlg-note" id="timesNote"></p>
+  <div class="trow thead" aria-hidden="true"><span>Call</span><span>Before · s</span><span>After · s</span><span></span></div>
+  <div class="tlist" id="timesList"></div>
+  <div class="dlg-foot">
+    <button class="btn" id="clearTimesBtn" type="button">Clear all</button>
+    <button class="btn primary" id="timesDone" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Done</button>
+  </div>
+</dialog>
+
 <script>
 /*__VOICE_DATA__*/
 </script>
@@ -212,53 +270,104 @@ fieldset:disabled .stepper,fieldset:disabled .chip,fieldset:disabled .mini,field
 (() => {
 'use strict';
 const $ = (s) => document.querySelector(s);
+
+/* ===================== What can be called ===================== */
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const DIGITS = '0123456789'.split('');
-const SYMBOLS = ALPHA.concat(DIGITS);   // everything that can be called; cfg.letters holds the ones in the draw
-const STORE_KEY = 'letter-call-timer:v4';
-// Settings saved by earlier versions carry over. Before/After restart from the new defaults (they moved from tenths to
-// hundredths), Random range is off for now, and v2 settings take the pre-beep default unless it had been switched on.
+// The ten basic colour terms most languages share (grey left out: too close to the page itself).
+const COLOURS = [
+  { id: 'red', name: 'Red', hex: '#e53935' }, { id: 'orange', name: 'Orange', hex: '#fb8c00' },
+  { id: 'yellow', name: 'Yellow', hex: '#fdd835' }, { id: 'green', name: 'Green', hex: '#43a047' },
+  { id: 'blue', name: 'Blue', hex: '#1e88e5' }, { id: 'purple', name: 'Purple', hex: '#8e24aa' },
+  { id: 'pink', name: 'Pink', hex: '#f06292' }, { id: 'brown', name: 'Brown', hex: '#795548' },
+  { id: 'black', name: 'Black', hex: '#000000' }, { id: 'white', name: 'White', hex: '#ffffff' },
+];
+const COLOUR = Object.fromEntries(COLOURS.map((c) => [c.id, c]));
+(() => {   // text on a colour: white or near-black, whichever contrasts more
+  const lum = (hex) => { const n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); };
+  const dark = '#111318', Ld = lum(dark);
+  COLOURS.forEach((c) => { const L = lum(c.hex); c.ink = 1.05 / (L + 0.05) >= (L + 0.05) / (Ld + 0.05) ? '#ffffff' : dark; });
+})();
+// Only one kind is drawn at a time; each kind keeps its own picks.
+const MODES = {
+  letters: { name: 'Letters', one: 'letter', items: ALPHA, cols: 13 },
+  digits:  { name: 'Digits', one: 'digit', items: DIGITS, cols: 5 },
+  colours: { name: 'Colours', one: 'colour', items: COLOURS.map((c) => c.id), cols: 5 },
+};
+const isColour = (id) => Object.prototype.hasOwnProperty.call(COLOUR, id);
+const callText = (id) => (isColour(id) ? COLOUR[id].name.toUpperCase() : id);   // what the display shows
+const callName = (id) => (isColour(id) ? COLOUR[id].name : id);                 // what labels say
+const itemExists = (id) => ALPHA.includes(id) || DIGITS.includes(id) || isColour(id);
+
+const STORE_KEY = 'letter-call-timer:v5';
+const V4_KEY = 'letter-call-timer:v4';
+// Older saved settings carry over: up to v4 one string held letters and digits together; v2/v3 timings restart from
+// the defaults (they moved from tenths to hundredths) and v2 takes the pre-beep default unless it had been switched on.
 const OLD_STORE_KEYS = ['letter-call-timer:v3', 'letter-call-timer:v2'];
 
 /* ===================== Config ===================== */
 // Times are stored as integers to keep the arithmetic exact: Before/After in hundredths of a second, moving in steps
-// of 5 (0.05 s); the pre-beep in tenths.
+// of 5 (0.05 s); the pre-beep in tenths. itemBefore/itemAfter edit one call's own times (cfg.times).
 const FIELDS = {
-  before:    { min: 0, max: 5995, step: 5, hundredths: true },
-  beforeMax: { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
-  after:     { min: 0, max: 5995, step: 5, hundredths: true },
-  afterMax:  { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
-  count:     { min: 1, max: 99 },
-  cycles:    { min: 0, max: 99, inf: true },   // 0 = endless
-  rest:      { min: 4, max: 600 },
-  preBeep:   { min: 0, max: 30, tenths: true, off: true, on: 5 },   // 0 = off; first tap on + gives 0.5 s
+  before:     { min: 0, max: 5995, step: 5, hundredths: true },
+  beforeMax:  { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
+  after:      { min: 0, max: 5995, step: 5, hundredths: true },
+  afterMax:   { min: 5, max: 6000, step: 5, hundredths: true },   // Random range (off for now)
+  count:      { min: 1, max: 99 },
+  cycles:     { min: 0, max: 99, inf: true },   // 0 = endless
+  rest:       { min: 4, max: 600 },
+  preBeep:    { min: 0, max: 30, tenths: true, off: true, on: 5 },   // 0 = off; first tap on + gives 0.5 s
+  itemBefore: { min: 0, max: 5995, step: 5, hundredths: true, item: 'b' },
+  itemAfter:  { min: 0, max: 5995, step: 5, hundredths: true, item: 'a' },
 };
-const GET_READY = 5;   // seconds from Start to the first letter of the first cycle (includes the 3-2-1)
-// With the between-letter beep on, a pre-beep that would land this close (s) to it is skipped: they would sound like one.
+// The countdown at Start: 5-4-3-2-1, one per second, then the first call. It is not counted in the session time.
+const START_COUNT = 5;
+// With the between-call beep on, a pre-beep that would land this close to it is skipped: they would sound like one.
 const MIN_BEEP_GAP_H = 30;   // in hundredths of a second (0.30 s); integers keep the comparison exact
-const DEFAULTS = { letters: 'ABCD', noRepeat: false, range: false,
+const DEFAULTS = { mode: 'letters',
+  picks: { letters: ['A', 'B', 'C', 'D'], digits: ['1', '2', '3', '4'], colours: ['red', 'yellow', 'green', 'blue'] },
+  times: {},   // id -> { b?: hundredths, a?: hundredths }: a call's own Before/After
+  noRepeat: false, range: false,
   before: 100, beforeMax: 200, after: 100, afterMax: 200, count: 12, cycles: 8, rest: 15, preBeep: 5, betweenBeep: true,
   voice: 'bf_emma' };
 
+const readJSON = (key) => { const s = JSON.parse(localStorage.getItem(key) || 'null'); return s && typeof s === 'object' ? s : null; };
 function loadCfg() {
   let c = { ...DEFAULTS };
   try {
-    let s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    let s = readJSON(STORE_KEY);
     if (!s) {
-      for (const key of OLD_STORE_KEYS) {
-        s = JSON.parse(localStorage.getItem(key) || 'null');
-        if (s && typeof s === 'object') { if (key.endsWith('v2') && !(s.preBeep > 0)) delete s.preBeep; break; }
+      s = readJSON(V4_KEY);
+      if (!s) {
+        for (const key of OLD_STORE_KEYS) { s = readJSON(key); if (s) { if (key.endsWith('v2') && !(s.preBeep > 0)) delete s.preBeep; break; } }
+        if (s) ['before', 'beforeMax', 'after', 'afterMax', 'range'].forEach((k) => delete s[k]);
       }
-      if (s && typeof s === 'object') ['before', 'beforeMax', 'after', 'afterMax', 'range'].forEach((k) => delete s[k]);
+      if (s && typeof s.letters === 'string') {
+        const str = s.letters, L = ALPHA.filter((x) => str.includes(x)), D = DIGITS.filter((x) => str.includes(x));
+        s.picks = { letters: L, digits: D.length ? D : DEFAULTS.picks.digits, colours: DEFAULTS.picks.colours };
+        s.mode = L.length || !D.length ? 'letters' : 'digits';
+      }
+      if (s) delete s.letters;
     }
-    if (s && typeof s === 'object') c = { ...c, ...s };
+    if (s) c = { ...c, ...s };
   } catch (e) {}
-  for (const k in FIELDS) { const f = FIELDS[k], st = f.step || 1; c[k] = Math.min(f.max, Math.max(f.min, Math.round((+c[k] || 0) / st) * st)); }
+  for (const k in FIELDS) { const f = FIELDS[k]; if (f.item) continue; const st = f.step || 1; c[k] = Math.min(f.max, Math.max(f.min, Math.round((+c[k] || 0) / st) * st)); }
   if (c.beforeMax <= c.before) c.beforeMax = c.before + FIELDS.beforeMax.step;
   if (c.afterMax <= c.after) c.afterMax = c.after + FIELDS.afterMax.step;
   c.range = false;   // Random range is switched off for now; its logic is kept for later
   delete c.prep;     // Get ready is no longer a setting
-  c.letters = SYMBOLS.filter((l) => String(c.letters).includes(l)).join('');
+  if (!MODES[c.mode]) c.mode = DEFAULTS.mode;
+  const picks = c.picks && typeof c.picks === 'object' ? c.picks : {};
+  c.picks = {};
+  for (const m in MODES) { const arr = Array.isArray(picks[m]) ? picks[m] : DEFAULTS.picks[m]; c.picks[m] = MODES[m].items.filter((x) => arr.includes(x)); }
+  const times = c.times && typeof c.times === 'object' ? c.times : {};
+  c.times = {};
+  for (const id in times) {
+    if (!itemExists(id) || !times[id] || typeof times[id] !== 'object') continue;
+    const o = {};
+    for (const f of ['b', 'a']) { const v = Math.round(+times[id][f] / 5) * 5; if (Number.isFinite(v)) o[f] = Math.min(5995, Math.max(0, v)); }
+    if (Object.keys(o).length) c.times[id] = o;
+  }
   if (!['bf_emma', 'bm_george'].includes(c.voice)) c.voice = DEFAULTS.voice;
   c.betweenBeep = c.betweenBeep !== false;
   return c;
@@ -266,13 +375,21 @@ function loadCfg() {
 const cfg = loadCfg();
 function saveCfg() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
-function fmtField(k) {
-  const f = FIELDS[k], v = cfg[k];
+const pool = () => cfg.picks[cfg.mode];
+const ownH = (id, f) => (cfg.times[id] ? cfg.times[id][f] : undefined);
+const beforeH = (id) => { const v = ownH(id, 'b'); return v === undefined ? cfg.before : v; };
+const afterH = (id) => { const v = ownH(id, 'a'); return v === undefined ? cfg.after : v; };
+
+// A stepper edits a setting, or (with an item id) one call's own time.
+function getVal(k, id) { const f = FIELDS[k]; if (!f.item) return cfg[k]; return f.item === 'b' ? beforeH(id) : afterH(id); }
+function fmtField(k, id) {
+  const f = FIELDS[k], v = getVal(k, id);
   if (f.inf && v === 0) return '∞';
   if (f.off && v === 0) return 'Off';
   if (f.hundredths) return (v / 100).toFixed(2);
   return f.tenths ? (v / 10).toFixed(1) : String(v);
 }
+function setVal(k, v, id) { if (FIELDS[k].item) setItemTime(id, FIELDS[k].item, v); else setField(k, v); }
 function setField(k, v) {
   const f = FIELDS[k];
   const st = f.step || 1;
@@ -283,6 +400,15 @@ function setField(k, v) {
   cfg[k] = v;
   if (k === 'before' && cfg.beforeMax <= v) cfg.beforeMax = v + FIELDS.beforeMax.step;
   if (k === 'after' && cfg.afterMax <= v) cfg.afterMax = v + FIELDS.afterMax.step;
+  saveCfg(); syncSettings();
+}
+// A call's own time; setting it back to the default value removes it, so the call follows the default again.
+function setItemTime(id, f, v) {
+  const F = FIELDS.itemBefore;
+  v = Math.min(F.max, Math.max(F.min, Math.round(v / F.step) * F.step));
+  const o = { ...(cfg.times[id] || {}) };
+  if (v === (f === 'b' ? cfg.before : cfg.after)) delete o[f]; else o[f] = v;
+  if (Object.keys(o).length) cfg.times[id] = o; else delete cfg.times[id];
   saveCfg(); syncSettings();
 }
 
@@ -365,7 +491,7 @@ function tone(t, f, dur, peak, type, dest) {
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
 }
-function beep(t) { // the tone between two letters
+function beep(t) { // the tone between two calls
   const d = sessSfx || sfxBus;
   tone(t, 1175, 0.17, 0.9, 'triangle', d); tone(t, 2350, 0.1, 0.22, 'sine', d);
 }
@@ -384,33 +510,38 @@ function buzzer(t) {
 function chime(t) { [1047, 1319, 1568, 2093].forEach((f, i) => tone(t + i * 0.11, f, 0.5, 0.35, 'sine', sessSfx || sfxBus)); }
 
 /* ===================== Session engine ===================== */
-// Timeline per cycle (times in seconds from Start):
-//   [get ready / rest] → 3 · 2 · 1 → LETTER → after → beep → before → LETTER → … → after → STOP
+// Timeline (times in seconds from Start):
+//   5 · 4 · 3 · 2 · 1 → CALL → after → beep → before → CALL → … → after → STOP → [rest … 3 · 2 · 1] → CALL → …
+// Before and After come from the called item's own times when it has them, else from the defaults.
 let S = freshState();
-function freshState() { return { status: 'idle', t0: 0, segs: [], sounds: [], seg: 0, snd: 0, built: 0, cursor: 0, last: null, end: Infinity, pausing: false, called: 0 }; }
+function freshState() { return { status: 'idle', t0: 0, segs: [], sounds: [], seg: 0, snd: 0, built: 0, cursor: 0, last: null, end: Infinity, workEnd: 0, pausing: false, called: 0 }; }
 const totalCycles = () => cfg.cycles || Infinity;
 function rndH(lo, hi) { return cfg.range ? lo + 5 * Math.floor(Math.random() * ((hi - lo) / 5 + 1)) : lo; }   // hundredths
-function rnd(lo, hi) { return rndH(lo, hi) / 100; }
-function pickLetter(prev) {
-  const pool = cfg.letters.split('');
-  const c = cfg.noRepeat && pool.length > 1 ? pool.filter((l) => l !== prev) : pool;
+function itemBeforeH(id) { const v = ownH(id, 'b'); return v === undefined ? rndH(cfg.before, cfg.beforeMax) : v; }
+function itemAfterH(id) { const v = ownH(id, 'a'); return v === undefined ? rndH(cfg.after, cfg.afterMax) : v; }
+function pickItem(prev) {
+  const p = pool();
+  const c = cfg.noRepeat && p.length > 1 ? p.filter((l) => l !== prev) : p;
   return c[Math.floor(Math.random() * c.length)];
 }
+const COUNT_CLIPS = { 5: '5', 4: '4', 3: 'three', 2: 'two', 1: 'one' };
 function appendCycle() {
   const c = S.built + 1;
   if (c > totalCycles()) return;
-  const start = S.cursor, lead = c === 1 ? GET_READY : cfg.rest, first = start + lead;
-  S.segs.push({ k: c === 1 ? 'prep' : 'rest', a: start, b: first - 3, c });
-  if (c === 1 && lead >= 4) S.sounds.push({ t: start, clip: 'ready' });
-  ['three', 'two', 'one'].forEach((w, i) => {
-    const t = first - 3 + i;
-    S.segs.push({ k: 'count', n: 3 - i, a: t, b: t + 1, c });
-    S.sounds.push({ t, clip: w, blip: true });
-  });
+  const first1 = c === 1, start = S.cursor;
+  const countFrom = first1 ? START_COUNT : 3;            // 5-4-3-2-1 at Start, 3-2-1 at the end of each rest
+  const first = start + (first1 ? START_COUNT : cfg.rest);
+  if (!first1) S.segs.push({ k: 'rest', a: start, b: first - 3, c });
+  for (let n = countFrom; n >= 1; n--) {
+    const t = first - n;
+    S.segs.push({ k: 'count', n, a: t, b: t + 1, c });
+    S.sounds.push({ t, clip: COUNT_CLIPS[n], blip: true });
+  }
   let t = first;
   for (let i = 1; i <= cfg.count; i++) {
+    const L = pickItem(S.last); S.last = L;   // picked first: its own Before applies to the gap leading up to it
     if (i > 1) {
-      const wH = rndH(cfg.before, cfg.beforeMax), w = wH / 100, seg = { k: 'wait', a: t, b: t + w, c, i };
+      const wH = itemBeforeH(L), w = wH / 100, seg = { k: 'wait', a: t, b: t + w, c, i };
       if (cfg.betweenBeep) S.sounds.push({ t, beep: true });
       // Optional pre-beep just before the call. It sits inside the Before gap and never moves the call.
       if (cfg.preBeep > 0) {
@@ -419,13 +550,13 @@ function appendCycle() {
       }
       S.segs.push(seg); t += w;
     }
-    const L = pickLetter(S.last); S.last = L;
-    const d = rnd(cfg.after, cfg.afterMax);
+    const d = itemAfterH(L) / 100;
     S.sounds.push({ t, clip: L, letter: true }); S.segs.push({ k: 'go', L, a: t, b: t + d, c, i }); t += d;
   }
   S.sounds.push({ t, clip: 'stop', buzz: true });
   S.cursor = t; S.built = c;
   if (c === totalCycles()) {
+    S.workEnd = t;   // time spent runs from the first call to the last STOP (the Start countdown is not counted)
     S.segs.push({ k: 'done', a: t, b: t + 2.6, c });
     S.sounds.push({ t: t + 0.9, clip: 'done', chime: true });
     S.end = t + 2.6;
@@ -443,7 +574,7 @@ function fireSound(e, at) {
 
 let starting = false;   // Start waits for the audio engine; a second tap meanwhile must not launch a second session
 async function start() {
-  if (!cfg.letters || starting) return;
+  if (!pool().length || starting) return;
   if (!ensureAudio()) return;
   starting = true;
   try {
@@ -496,36 +627,48 @@ function tick() {
 }
 setInterval(tick, 25);
 
-const el = { app: $('#app'), glyph: $('#glyph'), phaseName: $('#phaseName'), phaseTime: $('#phaseTime'), bar: $('#barFill'),
+const el = { app: $('#app'), stage: $('#stage'), glyph: $('#glyph'), phaseName: $('#phaseName'), phaseTime: $('#phaseTime'), bar: $('#barFill'),
   metaL: $('#metaL'), metaR: $('#metaR'), main: $('#mainBtn'), mainTxt: $('#mainTxt'), mainIco: $('#mainIco'), reset: $('#resetBtn'),
   cfgSet: $('#cfgSet'), wake: $('#wake'), wakeTxt: $('#wakeTxt') };
 const last = {};
 function put(key, node, prop, val) { if (last[key] !== val) { last[key] = val; if (prop === 'text') node.textContent = val; else if (prop === 'width') node.style.width = val; else node.setAttribute(prop, val); } }
 function fmtClock(sec) { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); }
 function setGlyph(txt, kind) {
-  put('g', el.glyph, 'text', txt); put('gl', el.glyph, 'data-len', String(Math.min(5, Math.max(1, [...txt].length))));
+  put('g', el.glyph, 'text', txt); put('gl', el.glyph, 'data-len', String(Math.min(6, Math.max(1, [...txt].length))));
   put('gk', el.glyph, 'data-k', kind || '');
 }
 function setPhase(p) { put('ph', el.app, 'data-phase', p); }
 function popGlyph() { el.glyph.classList.remove('pop'); void el.glyph.offsetWidth; el.glyph.classList.add('pop'); }
+// A colour call floods the display with that colour (the only time the display changes colour).
+let stageColour = null;
+function setStageColour(id) {
+  if (id === stageColour) return;
+  stageColour = id;
+  const st = el.stage.style;
+  if (id) { st.setProperty('--stage-bg', COLOUR[id].hex); st.setProperty('--stage-fg', COLOUR[id].ink); }
+  else { st.removeProperty('--stage-bg'); st.removeProperty('--stage-fg'); }
+}
 
+// Session length: the cycles and the rests between them; the 5-second countdown at Start is not counted.
 function estimate() {
-  const n = cfg.count;
-  const a = cfg.range ? (cfg.after + cfg.afterMax) / 200 : cfg.after / 100;
-  const b = cfg.range ? (cfg.before + cfg.beforeMax) / 200 : cfg.before / 100;
+  const p = pool(), n = cfg.count;
+  const avg = (fn) => (p.length ? p.reduce((s, id) => s + fn(id), 0) / p.length : 0) / 100;
+  const a = cfg.range ? (cfg.after + cfg.afterMax) / 200 : avg(afterH);
+  const b = cfg.range ? (cfg.before + cfg.beforeMax) / 200 : avg(beforeH);
+  const approx = cfg.range || p.some((id) => cfg.times[id]);   // own times make the length depend on the draw
   const cyc = n * a + (n - 1) * b;
-  if (!cfg.cycles) return { inf: true, cyc };
-  return { total: GET_READY + cfg.cycles * cyc + (cfg.cycles - 1) * cfg.rest, cyc };
+  if (!cfg.cycles) return { inf: true, cyc, approx };
+  return { total: cfg.cycles * cyc + (cfg.cycles - 1) * cfg.rest, cyc, approx };
 }
 function renderIdle() {
   if (S.status !== 'idle') return;
-  setPhase('idle');
+  setPhase('idle'); setStageColour(null);
   const e = estimate();
-  if (!cfg.letters) {
-    setGlyph('–'); put('pn', el.phaseName, 'text', 'Pick at least one letter'); put('pt', el.phaseTime, 'text', '');
+  if (!pool().length) {
+    setGlyph('–'); put('pn', el.phaseName, 'text', 'Pick at least one ' + MODES[cfg.mode].one); put('pt', el.phaseTime, 'text', '');
   } else {
     setGlyph(e.inf ? '∞' : fmtClock(e.total));
-    put('pn', el.phaseName, 'text', e.inf ? 'Endless cycles' : (cfg.range ? 'Session ≈' : 'Session'));
+    put('pn', el.phaseName, 'text', e.inf ? 'Endless cycles' : (e.approx ? 'Session ≈' : 'Session'));
     put('pt', el.phaseTime, 'text', fmtClock(e.cyc) + ' / cycle');
   }
   put('ml', el.metaL, 'text', 'Call timer');
@@ -539,10 +682,10 @@ function frame() {
   if (!ctx || (S.status !== 'running' && S.status !== 'paused' && S.status !== 'done')) return;
   const now = ctx.currentTime - S.t0;
   if (S.status === 'done') {
-    setPhase('done');
+    setPhase('done'); setStageColour(null);
     setGlyph('DONE'); put('pn', el.phaseName, 'text', 'Well done');
     put('pt', el.phaseTime, 'text', S.called + ' calls'); put('bw', el.bar, 'width', '0%');
-    put('mr', el.metaR, 'text', fmtClock(S.end)); put('ml', el.metaL, 'text', 'Finished');
+    put('mr', el.metaR, 'text', fmtClock(S.workEnd - START_COUNT)); put('ml', el.metaL, 'text', 'Finished');
     return;
   }
   advanceSeg(now);
@@ -552,9 +695,8 @@ function frame() {
   let phase = g.k, glyph = '', name = '', kind = '', remain = Math.max(0, g.b - now), span = Math.max(0.001, g.b - g.a);
   let metaR = '';
   switch (g.k) {
-    case 'prep': glyph = String(Math.ceil(g.b + 3 - now - 1e-6)); name = 'Get ready'; metaR = cfg.count + ' calls'; remain = g.b + 3 - now; span = g.b + 3 - g.a; break;
-    case 'count': glyph = String(g.n); name = g.n === 1 ? 'Here we go' : 'Get set'; metaR = cfg.count + ' calls'; break;
-    case 'go': glyph = g.L; name = 'Go'; kind = 'go'; metaR = 'Call ' + g.i + '/' + cfg.count; break;
+    case 'count': glyph = String(g.n); name = g.n === 1 ? 'Here we go' : g.n > 3 ? 'Get ready' : 'Get set'; metaR = cfg.count + ' calls'; break;
+    case 'go': glyph = callText(g.L); name = 'Go'; kind = 'go'; metaR = 'Call ' + g.i + '/' + cfg.count; break;
     case 'wait': {
       const armed = g.pre != null && now >= g.pre;
       glyph = ''; kind = armed ? 'armed' : 'wait'; name = armed ? 'Ready' : 'Next call'; metaR = 'Call ' + (g.i) + '/' + cfg.count;
@@ -570,6 +712,7 @@ function frame() {
   if (g.k === 'rest') put('ml', el.metaL, 'text', 'Cycle ' + (g.c - 1) + (tc === Infinity ? '' : '/' + tc) + ' done');
   else put('ml', el.metaL, 'text', cyc);
   setPhase(phase);
+  setStageColour(g.k === 'go' && isColour(g.L) ? g.L : null);
   const prevKind = last.gk;
   setGlyph(glyph, kind);
   if (kind === 'armed' && prevKind !== 'armed') popGlyph();
@@ -639,7 +782,7 @@ function syncUI() {
   el.main.dataset.mode = mode;
   el.mainIco.innerHTML = ICONS[mode];
   el.mainTxt.textContent = st === 'running' ? 'Pause' : st === 'paused' ? 'Resume' : st === 'done' ? 'Again' : 'Start';
-  el.main.disabled = !cfg.letters && !active;
+  el.main.disabled = !pool().length && !active;
   if (st === 'idle') renderIdle();
 }
 el.main.addEventListener('click', () => {
@@ -650,37 +793,51 @@ el.main.addEventListener('click', () => {
 });
 el.reset.addEventListener('click', reset);
 
-// Calls: a chip per letter and per digit
-const lettersEl = $('#letters'), digitsEl = $('#digits');
-SYMBOLS.forEach((L) => {
-  const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = L; b.dataset.l = L;
-  b.addEventListener('click', () => {
-    const set = new Set(cfg.letters.split('')); set.has(L) ? set.delete(L) : set.add(L);
-    cfg.letters = SYMBOLS.filter((x) => set.has(x)).join(''); saveCfg(); syncSettings();
+// What to call: one kind at a time
+document.querySelectorAll('#modeSeg button').forEach((b) => b.addEventListener('click', () => { cfg.mode = b.dataset.mode; saveCfg(); syncSettings(); }));
+const itemsEl = $('#items');
+let builtMode = null;
+function setSwatch(node, id) {
+  if (isColour(id)) { node.style.setProperty('--c', COLOUR[id].hex); node.style.setProperty('--ci', COLOUR[id].ink); }
+}
+function buildItems() {
+  const m = MODES[cfg.mode];
+  itemsEl.innerHTML = '';
+  itemsEl.style.gridTemplateColumns = 'repeat(' + m.cols + ', minmax(0, 1fr))';
+  m.items.forEach((id) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (isColour(id) ? ' colour' : ''); b.dataset.id = id;
+    b.textContent = callName(id); setSwatch(b, id);
+    b.addEventListener('click', () => {
+      const set = new Set(pool()); set.has(id) ? set.delete(id) : set.add(id);
+      cfg.picks[cfg.mode] = m.items.filter((x) => set.has(x)); saveCfg(); syncSettings();
+    });
+    itemsEl.appendChild(b);
   });
-  (DIGITS.includes(L) ? digitsEl : lettersEl).appendChild(b);
-});
-$('#allBtn').addEventListener('click', () => { cfg.letters = SYMBOLS.join(''); saveCfg(); syncSettings(); });
-$('#noneBtn').addEventListener('click', () => { cfg.letters = ''; saveCfg(); syncSettings(); });
+  builtMode = cfg.mode;
+}
+$('#allBtn').addEventListener('click', () => { cfg.picks[cfg.mode] = MODES[cfg.mode].items.slice(); saveCfg(); syncSettings(); });
+$('#noneBtn').addEventListener('click', () => { cfg.picks[cfg.mode] = []; saveCfg(); syncSettings(); });
+
 // On/off choices shown like the voice picker: tick for on, cross for off. "Repeats" reads the noRepeat setting inverted.
 const ONOFF = [['beepSeg', 'betweenBeep', false], ['repeatSeg', 'noRepeat', true]];
 ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
   b.addEventListener('click', () => { const on = b.dataset.on === '1'; cfg[key] = inverted ? !on : on; saveCfg(); syncSettings(); })));
 
-const LABELS = { before: 'Seconds before a call', beforeMax: 'Longest time before a call', after: 'Seconds after a call',
+const LABELS = { before: 'Default seconds before a call', beforeMax: 'Longest time before a call', after: 'Default seconds after a call',
   afterMax: 'Longest time after a call', count: 'Calls per cycle', cycles: 'Number of cycles', rest: 'Rest between cycles in seconds',
-  preBeep: 'Seconds before each call to also beep, or Off' };
+  preBeep: 'Seconds before each call to also beep, or Off', itemBefore: 'Seconds before', itemAfter: 'Seconds after' };
 // Steppers: tap for one step, hold to repeat (speeds up the longer you hold).
-document.querySelectorAll('.stepper').forEach((box) => {
-  const k = box.dataset.field, f = FIELDS[k];
+function bindStepper(box) {
+  const k = box.dataset.field, id = box.dataset.id, f = FIELDS[k];
+  const label = LABELS[k] + (id ? ' ' + callName(id) : '');
   box.innerHTML = '<button type="button" aria-label="Decrease">−</button><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false"><button type="button" aria-label="Increase">+</button>';
   const [dec, inp, inc] = box.children;
-  inp.id = 'f-' + k; inp.setAttribute('aria-label', LABELS[k]);
-  dec.setAttribute('aria-label', 'Decrease ' + LABELS[k]); inc.setAttribute('aria-label', 'Increase ' + LABELS[k]);
+  inp.id = 'f-' + k + (id ? '-' + id : ''); inp.setAttribute('aria-label', label);
+  dec.setAttribute('aria-label', 'Decrease ' + label); inc.setAttribute('aria-label', 'Increase ' + label);
   const bindHold = (btn, dir) => {
     let timer = 0, t0 = 0;
     const stepOnce = () => { const held = performance.now() - t0; const mult = held > 2600 ? 10 : held > 1200 ? 5 : 1; bump(dir * mult); };
-    const bump = (d) => { if (f.off && cfg[k] === 0 && d > 0) setField(k, f.on); else setField(k, cfg[k] + d * (f.step || 1)); };
+    const bump = (d) => { const v = getVal(k, id); if (f.off && v === 0 && d > 0) setVal(k, f.on, id); else setVal(k, v + d * (f.step || 1), id); };
     const stop = () => { clearTimeout(timer); timer = 0; };
     btn.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return; e.preventDefault(); btn.setPointerCapture && btn.setPointerCapture(e.pointerId);
@@ -695,15 +852,16 @@ document.querySelectorAll('.stepper').forEach((box) => {
   bindHold(dec, -1); bindHold(inc, +1);
   const commit = () => {
     const raw = inp.value.trim().replace(',', '.');
-    if ((f.inf || f.off) && (raw === '' || raw === '∞' || raw === '0' || /^off$/i.test(raw))) { setField(k, 0); return; }
+    if ((f.inf || f.off) && (raw === '' || raw === '∞' || raw === '0' || /^off$/i.test(raw))) { setVal(k, 0, id); return; }
     const n = parseFloat(raw);
     if (isNaN(n)) { syncSettings(); return; }
-    setField(k, f.hundredths ? Math.round(n * 20) * 5 : f.tenths ? Math.round(n * 10) : n);
+    setVal(k, f.hundredths ? Math.round(n * 20) * 5 : f.tenths ? Math.round(n * 10) : n, id);
   };
   inp.addEventListener('change', commit);
-  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { inp.blur(); } });
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
   inp.addEventListener('focus', () => setTimeout(() => inp.select(), 0));
-});
+}
+document.querySelectorAll('.stepper').forEach(bindStepper);
 
 // Voice
 document.querySelectorAll('#voiceSeg button').forEach((b) => {
@@ -711,23 +869,72 @@ document.querySelectorAll('#voiceSeg button').forEach((b) => {
     cfg.voice = b.dataset.voice; saveCfg(); syncSettings();
     if (!ensureAudio()) return;
     await voicesReady;
-    const pool = cfg.letters ? cfg.letters.split('') : ALPHA;
-    playClip(pool[Math.floor(Math.random() * pool.length)], ctx.currentTime + 0.02, voiceBus, cfg.voice);
+    const p = pool().length ? pool() : MODES[cfg.mode].items;
+    playClip(p[Math.floor(Math.random() * p.length)], ctx.currentTime + 0.02, voiceBus, cfg.voice);
   });
 });
 
+/* ===================== Own times (modal) ===================== */
+// Every picked call of the current kind gets a row: its Before and After, greyed while they follow the defaults.
+const dlg = $('#timesDlg'), listEl = $('#timesList');
+const RESET_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+function buildTimesList() {
+  listEl.innerHTML = '';
+  const p = pool();
+  if (!p.length) { const e = document.createElement('p'); e.className = 'tempty'; e.textContent = 'Pick at least one ' + MODES[cfg.mode].one + ' first.'; listEl.appendChild(e); return; }
+  p.forEach((id) => {
+    const row = document.createElement('div'); row.className = 'trow';
+    const badge = document.createElement('span'); badge.className = 'ibadge' + (isColour(id) ? ' colour' : ''); badge.textContent = callName(id); setSwatch(badge, id);
+    row.appendChild(badge);
+    for (const k of ['itemBefore', 'itemAfter']) { const s = document.createElement('div'); s.className = 'stepper'; s.dataset.field = k; s.dataset.id = id; row.appendChild(s); bindStepper(s); }
+    const r = document.createElement('button'); r.type = 'button'; r.className = 'ireset'; r.dataset.id = id; r.innerHTML = RESET_SVG;
+    r.setAttribute('aria-label', 'Use the default times for ' + callName(id)); r.title = 'Back to the default Before and After';
+    r.addEventListener('click', () => { delete cfg.times[id]; saveCfg(); syncSettings(); });
+    row.appendChild(r);
+    listEl.appendChild(row);
+  });
+}
+function openTimes() {
+  if (S.status === 'running' || S.status === 'paused') return;
+  $('#timesTitle').textContent = 'Own times · ' + MODES[cfg.mode].name;
+  buildTimesList(); syncSettings();
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+}
+function closeTimes() { if (dlg.open) { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); } }
+$('#timesBtn').addEventListener('click', openTimes);
+$('#timesClose').addEventListener('click', closeTimes);
+$('#timesDone').addEventListener('click', closeTimes);
+dlg.addEventListener('click', (e) => { if (e.target === dlg) closeTimes(); });   // tap on the dimmed backdrop
+dlg.addEventListener('close', () => { listEl.innerHTML = ''; syncSettings(); });
+$('#clearTimesBtn').addEventListener('click', () => { pool().forEach((id) => delete cfg.times[id]); saveCfg(); syncSettings(); });
+
+/* ===================== Keeping the screen in step with the settings ===================== */
 function syncSettings() {
-  document.querySelectorAll('#letters .chip, #digits .chip').forEach((c) => c.setAttribute('aria-pressed', cfg.letters.includes(c.dataset.l) ? 'true' : 'false'));
-  const n = cfg.letters.length;
-  const head = $('#lettersHead');
-  head.textContent = n ? 'Calls · ' + n : 'Pick a letter or digit';
+  if (builtMode !== cfg.mode) buildItems();
+  const p = new Set(pool());
+  itemsEl.querySelectorAll('.chip').forEach((c) => {
+    const id = c.dataset.id;
+    c.setAttribute('aria-pressed', p.has(id) ? 'true' : 'false');
+    c.classList.toggle('own', !!cfg.times[id]);
+    c.title = callName(id) + (cfg.times[id] ? ' (own times)' : '');
+  });
+  document.querySelectorAll('#modeSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === cfg.mode ? 'true' : 'false'));
+  const n = p.size, head = $('#callsHead');
+  head.textContent = n ? 'Calls · ' + n : 'Pick at least one ' + MODES[cfg.mode].one;
   head.classList.toggle('hint-bad', !n);
+  const own = pool().filter((id) => cfg.times[id]).length;
+  $('#timesBtnTxt').textContent = own ? 'Own times · ' + own : 'Own times';
   ONOFF.forEach(([id, key, inverted]) => document.querySelectorAll('#' + id + ' button').forEach((b) =>
     b.setAttribute('aria-pressed', String((b.dataset.on === '1') === (inverted ? !cfg[key] : !!cfg[key])))));
   document.querySelectorAll('.stepper').forEach((box) => {
-    const k = box.dataset.field, inp = box.children[1];
-    if (document.activeElement !== inp) inp.value = fmtField(k);
+    const k = box.dataset.field, id = box.dataset.id, inp = box.children[1];
+    if (document.activeElement !== inp) inp.value = fmtField(k, id);
+    if (id) box.classList.toggle('inherit', ownH(id, FIELDS[k].item) === undefined);
   });
+  listEl.querySelectorAll('.ireset').forEach((r) => { r.disabled = !cfg.times[r.dataset.id]; });
+  $('#clearTimesBtn').disabled = !own;
+  $('#timesNote').textContent = 'Defaults: Before ' + (cfg.before / 100).toFixed(2) + ' s · After ' + (cfg.after / 100).toFixed(2) +
+    ' s. Change a value to give that call its own time; grey values follow the defaults.';
   document.querySelectorAll('#voiceSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.voice === cfg.voice ? 'true' : 'false'));
   syncUI();
 }

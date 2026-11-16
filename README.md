@@ -1,6 +1,6 @@
 # Letter Call Timer
 
-A one-screen HIIT reaction timer for Android. It calls random letters (A–Z) and digits (0–9) in a British voice, with a 3‑2‑1 countdown, a beep between letters, a STOP cue and rest between cycles.
+A one-screen HIIT reaction timer for Android. It calls random letters (A–Z), digits (0–9) or colours in a British voice, with a 3‑2‑1 countdown, a beep between letters, a STOP cue and rest between cycles.
 
 **Open it:** https://shadome.github.io/letter-call/
 
@@ -10,10 +10,13 @@ A one-screen HIIT reaction timer for Android. It calls random letters (A–Z) an
 3. Start it from the home screen. It opens without the browser bar and works offline.
 
 ## What it does
+- Calls are letters, digits **or** colours (Letters / Digits / Colours tabs), one kind at a time; each kind remembers its own picks. Colours: red, orange, yellow, green, blue, purple, pink, brown, black, white; a colour call fills the display with that colour.
+- Any picked call can have its own Before and After, replacing the defaults: **Own times** opens a window listing every picked call. Calls with their own times show a dot.
+- Start counts down 5‑4‑3‑2‑1 before the first call; that countdown is not counted in the session time.
 - Before / After times around each letter, in steps of 0.05 s, always shown with two decimals (1.00). The random range option is switched off for now; its logic is kept in the code.
 - Beep between letters (✓ / ✗ toggle, on by default): sounds when the Before gap starts.
-- Pre-beep (0.5 s by default, can be Off or 0.1–3.0 s): a short, higher tick that sounds that long before each call, so you can get ready. It is a different sound from the beep between calls, so the two can be told apart by ear. It sits inside the Before gap and never changes the Before/After timing. The first letter of a cycle has the 3‑2‑1 instead. With the beep between letters on, a pre-beep within 0.3 s of it is skipped; with it off, a pre-beep longer than the gap plays at the start of the gap.
-- Calls per cycle, number of cycles (or endless), rest between cycles, and which letters and digits are in the draw (one row of letters, one of digits). Get ready (Start to the first letter) is a fixed 5 s.
+- Pre-beep (0.5 s by default, can be Off or 0.1–3.0 s): a short, higher tick that sounds that long before each call, so you can get ready. It is a different sound from the beep between calls, so the two can be told apart by ear. It sits inside the Before gap and never changes the Before/After timing. The first call of a cycle has the countdown instead. With the beep between calls on, a pre-beep within 0.3 s of it is skipped; with it off, a pre-beep longer than the gap plays at the start of the gap.
+- Calls per cycle, number of cycles (or endless), rest between cycles, and which items are in the draw.
 - Two British voices, female ♀ and male ♂ (tap one to hear it).
 - Repeats (✓ / ✗ toggle, ✓ by default): ✓ lets the same letter come twice in a row, ✗ never does.
 - Defaults: letters A–D, repeats allowed, before 1.00 s, after 1.00 s, 12 letters per cycle, 8 cycles, 15 s rest, beep between letters on, pre-beep 0.5 s.
@@ -25,7 +28,7 @@ A one-screen HIIT reaction timer for Android. It calls random letters (A–Z) an
 |---|---|
 | `index.html`, `sw.js`, `manifest.webmanifest`, `icons/`, `fonts/` | The published app (generated, served by GitHub Pages) |
 | `src/template.html` | The app source: layout, styles, timer engine, sounds |
-| `src/voices.js` | The spoken letters, digits and cues, as embedded MP3 clips |
+| `src/voices.js` | The spoken letters, digits, colours and cues, as embedded MP3 clips |
 | `src/sw.template.js` | Offline service worker template |
 | `src/build.py` | Builds `index.html` and `sw.js` from the sources |
 | `src/tools/` | Scripts that regenerate the voice clips and the icons |
